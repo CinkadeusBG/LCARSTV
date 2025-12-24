@@ -1,0 +1,8 @@
+{
+  "channels": [
+    { "call_sign": "WTNG", "media_dirs": ["media/WTNG"] },
+    { "call_sign": "KDSN", "media_dirs": ["media/KDSN"] },
+    { "call_sign": "KVOY", "media_dirs": ["media/KVOY"] },
+    { "call_sign": "WMOV", "media_dirs": ["media/WMOV"] }
+  ]
+}
