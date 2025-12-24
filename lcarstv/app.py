@@ -42,13 +42,17 @@ def main() -> int:
 
     player: MpvPlayer | None = None
     if not args.dry_run:
-        player = MpvPlayer(debug=settings.debug)
+        player = MpvPlayer(
+            debug=settings.debug,
+            static_burst_path=str(settings.static_burst_path) if settings.static_burst_path else None,
+            static_burst_duration_sec=0.4,
+        )
 
     try:
         # Initial tune
         info = station.tune_to(station.active_call_sign, now_utc())
         if player is not None:
-            player.play(info.current_file, info.position_sec)
+            player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
 
         while True:
             evt = inp.poll()
@@ -59,11 +63,11 @@ def main() -> int:
                 if evt.kind == "channel_up":
                     info = station.channel_up(now_utc())
                     if player is not None:
-                        player.play(info.current_file, info.position_sec)
+                        player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
                 if evt.kind == "channel_down":
                     info = station.channel_down(now_utc())
                     if player is not None:
-                        player.play(info.current_file, info.position_sec)
+                        player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
 
             # low CPU polling loop; no threads.
             time.sleep(0.05)

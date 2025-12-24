@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+import threading
 from typing import Any, BinaryIO
 
 
@@ -25,6 +26,7 @@ class MpvIpcClient:
 
     _fh: BinaryIO | None = None
     _next_request_id: int = 1
+    _lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
 
     def connect(self, *, timeout_sec: float = 2.0) -> None:
         deadline = time.time() + timeout_sec
@@ -53,6 +55,14 @@ class MpvIpcClient:
 
     def command(self, *cmd: Any, timeout_sec: float = 2.0) -> dict[str, Any]:
         """Send an mpv IPC command and wait for the matching response."""
+
+        # Thread-safe: some callers may schedule time-based follow-ups (e.g., clearing an
+        # overlay) without impacting the main playback loop.
+        with self._lock:
+            return self._command_locked(*cmd, timeout_sec=timeout_sec)
+
+    def _command_locked(self, *cmd: Any, timeout_sec: float = 2.0) -> dict[str, Any]:
+        """Implementation for `command()`. Call only while holding `_lock`."""
 
         req_id = self._next_request_id
         self._next_request_id += 1
@@ -103,4 +113,3 @@ class MpvIpcClient:
             buf += b
 
         raise MpvIpcError(f"Timed out waiting for mpv IPC response for request_id={req_id}")
-

@@ -6,7 +6,8 @@ from pathlib import Path
 
 from .config import Settings
 from .models import ChannelState
-from .selector import DeterministicSelector
+from .selector import SmartRandomSelector
+from .state_store import StateStore
 
 
 @dataclass
@@ -14,7 +15,9 @@ class ChannelRuntime:
     call_sign: str
     files: tuple[Path, ...]
     settings: Settings
-    selector: DeterministicSelector
+    cooldown: int
+    selector: SmartRandomSelector
+    store: StateStore
     state: ChannelState
 
     def sync_to_now(self, now: datetime, *, debug: bool = False) -> None:
@@ -40,10 +43,22 @@ class ChannelRuntime:
             self.state.started_at = self.state.started_at + timedelta(seconds=duration)
 
             current_path = Path(self.state.current_file)
-            next_path = self.selector.next_after(self.files, current_path)
+            next_path = self.selector.pick_next(
+                call_sign=self.call_sign,
+                files=self.files,
+                cooldown=self.cooldown,
+                current_file=current_path,
+            )
             if debug:
                 print(
                     f"[debug] {self.call_sign} advance: {current_path.name} -> {next_path.name} new_started_at={self.state.started_at.isoformat()}"
                 )
             self.state.current_file = str(next_path)
 
+            # Persist live state after each rollover.
+            st = self.selector.state
+            ch = st.channels.get(self.call_sign)
+            if ch is not None:
+                ch.current_file = self.state.current_file
+                ch.started_at = self.state.started_at
+                self.store.save(st)

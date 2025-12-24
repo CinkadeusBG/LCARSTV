@@ -9,6 +9,7 @@ from pathlib import Path
 class ChannelConfig:
     call_sign: str
     media_dirs: tuple[Path, ...]
+    cooldown: int | None
 
 
 @dataclass(frozen=True)
@@ -26,7 +27,9 @@ class ChannelsConfig:
 class Settings:
     extensions: tuple[str, ...]
     default_duration_sec: float
+    default_cooldown: int
     debug: bool
+    static_burst_path: Path | None
 
 
 def load_channels_config(path: Path) -> ChannelsConfig:
@@ -35,7 +38,9 @@ def load_channels_config(path: Path) -> ChannelsConfig:
     for ch in data.get("channels", []):
         call_sign = str(ch["call_sign"]).strip().upper()
         media_dirs = tuple(Path(p) for p in ch.get("media_dirs", []))
-        chans.append(ChannelConfig(call_sign=call_sign, media_dirs=media_dirs))
+        cooldown_raw = ch.get("cooldown")
+        cooldown = int(cooldown_raw) if cooldown_raw is not None else None
+        chans.append(ChannelConfig(call_sign=call_sign, media_dirs=media_dirs, cooldown=cooldown))
     if not chans:
         raise ValueError("channels.json has no channels")
     return ChannelsConfig(channels=tuple(chans))
@@ -47,10 +52,14 @@ def load_settings(path: Path) -> Settings:
     if not extensions:
         raise ValueError("settings.json requires non-empty extensions")
     default_duration_sec = float(data.get("default_duration_sec", 1800))
+    default_cooldown = int(data.get("default_cooldown", 10))
     debug = bool(data.get("debug", False))
+    static_burst_raw = data.get("static_burst_path")
+    static_burst_path = Path(static_burst_raw) if static_burst_raw else None
     return Settings(
         extensions=extensions,
         default_duration_sec=default_duration_sec,
+        default_cooldown=default_cooldown,
         debug=debug,
+        static_burst_path=static_burst_path,
     )
-

@@ -1,8 +1,34 @@
 {
+  "channel_order": ["WTNG", "KDSN", "KVOY", "WMOV"],
+
   "channels": [
-    { "call_sign": "WTNG", "media_dirs": ["media/WTNG"] },
-    { "call_sign": "KDSN", "media_dirs": ["media/KDSN"] },
-    { "call_sign": "KVOY", "media_dirs": ["media/KVOY"] },
-    { "call_sign": "WMOV", "media_dirs": ["media/WMOV"] }
+    {
+      "call_sign": "WTNG",
+      "label": "Star Trek: The Next Generation",
+      "media_dirs": ["Z:/media/WTNG"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "cooldown": 10
+    },
+    {
+      "call_sign": "KDSN",
+      "label": "Star Trek: Deep Space Nine",
+      "media_dirs": ["Z:/media/KDSN"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "cooldown": 10
+    },
+    {
+      "call_sign": "KVOY",
+      "label": "Star Trek: Voyager",
+      "media_dirs": ["Z:/media/KVOY"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "cooldown": 10
+    },
+    {
+      "call_sign": "WMOV",
+      "label": "Star Trek Films (Pre-Kelvin)",
+      "media_dirs": ["Z:/media/WMOV"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "cooldown": 3
+    }
   ]
 }

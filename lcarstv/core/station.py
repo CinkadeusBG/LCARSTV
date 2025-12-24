@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
+
+import random
 
 from .config import ChannelsConfig, Settings
 from .channel import ChannelRuntime
 from .models import ChannelState, TuneInfo
 from .scanner import scan_media_dirs
-from .selector import DeterministicSelector
+from .selector import SmartRandomSelector
+from .state_store import PersistedChannel, StateStore
 
 
 @dataclass
@@ -26,7 +29,9 @@ class Station:
         repo_root: Path,
         now: datetime,
     ) -> "Station":
-        selector = DeterministicSelector()
+        store = StateStore(path=repo_root / "data" / "state.json", debug=settings.debug)
+        persisted = store.load()
+        selector = SmartRandomSelector(store=store, state=persisted, debug=settings.debug)
         channels: dict[str, ChannelRuntime] = {}
         for ch in channels_cfg.channels:
             scan = scan_media_dirs(repo_root, ch.media_dirs, settings.extensions)
@@ -39,13 +44,56 @@ class Station:
             else:
                 files = scan.files
 
-            first = selector.first(files)
-            state = ChannelState(call_sign=ch.call_sign, current_file=str(first), started_at=now)
+            cooldown = int(ch.cooldown) if ch.cooldown is not None else int(settings.default_cooldown)
+
+            # Ensure scheduler has a bag for this channel/library.
+            selector.ensure_initialized(ch.call_sign, files)
+
+            # Restore persisted live state if valid.
+            persisted_ch = selector.state.channels.get(ch.call_sign) or PersistedChannel()
+            eligible = {str(p) for p in files}
+            restored_file = persisted_ch.current_file if persisted_ch.current_file in eligible else None
+            restored_started = persisted_ch.started_at
+
+            if restored_file and restored_started:
+                current_file = restored_file
+                started_at = restored_started
+                if settings.debug:
+                    print(f"[debug] {ch.call_sign} restore: {Path(current_file).name} started_at={started_at.isoformat()}")
+            else:
+                # Invalid/missing persisted state: choose a new file and start it in-progress.
+                current_path = selector.pick_next(
+                    call_sign=ch.call_sign,
+                    files=files,
+                    cooldown=cooldown,
+                    current_file=None,
+                )
+                current_file = str(current_path)
+
+                dur = max(1.0, float(settings.default_duration_sec))
+                offset = random.random() * dur
+                started_at = now - timedelta(seconds=offset)
+
+                if settings.debug:
+                    print(
+                        f"[debug] {ch.call_sign} init: {Path(current_file).name} started_at={started_at.isoformat()} offset={offset:.2f}s"
+                    )
+
+                # Persist initial live state.
+                pch = selector.state.channels.get(ch.call_sign)
+                if pch is not None:
+                    pch.current_file = current_file
+                    pch.started_at = started_at
+                    store.save(selector.state)
+
+            state = ChannelState(call_sign=ch.call_sign, current_file=current_file, started_at=started_at)
             channels[ch.call_sign] = ChannelRuntime(
                 call_sign=ch.call_sign,
                 files=files,
                 settings=settings,
+                cooldown=cooldown,
                 selector=selector,
+                store=store,
                 state=state,
             )
 
@@ -87,4 +135,3 @@ class Station:
             started_at=chan.state.started_at,
             position_sec=pos,
         )
-
