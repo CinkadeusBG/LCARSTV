@@ -108,17 +108,31 @@ def main() -> int:
                     # Debounce by the last played media path we requested.
                     current_media = player.current_media_path
 
+                    # Only evaluate triggers for the currently active channel.
+                    active_chan = station.channels.get(station.active_call_sign)
+                    active_expected = _norm_path(active_chan.state.current_file) if active_chan is not None else None
+                    current_media_norm = _norm_path(current_media)
+                    if active_expected is None or current_media_norm is None or active_expected != current_media_norm:
+                        # mpv is still transitioning or showing static / previous channel; ignore triggers.
+                        continue
+
+                    # If we are within the playback guard window (static + post-seek grace),
+                    # do not run *any* trigger evaluation.
+                    if player.playback_guard_active():
+                        continue
+
                     # EOF/IDLE/NEAR_END detection from mpv.
                     mpv_trigger = player.poll_end_of_episode(end_epsilon_sec=settings.end_epsilon_sec)
 
-                    # Schedule rollover uses mpv-reported duration (best-effort).
+                    # Schedule rollover (authoritative / deterministic) based on cached per-file duration.
                     schedule_trigger = False
-                    dur = player.current_duration_sec()
-                    if dur is not None and dur > 0 and current_media is not None:
-                        chan = station.channels.get(station.active_call_sign)
-                        if chan is not None:
-                            pos = chan.state.position_sec(now)
-                            schedule_trigger = pos >= float(dur)
+                    dur = player.current_duration_sec()  # still used for debug logging only
+                    if active_chan is not None:
+                        expected_dur = active_chan.durations.get_duration_sec(
+                            active_chan.state.current_file,
+                            default_duration_sec=float(settings.default_duration_sec),
+                        )
+                        schedule_trigger = active_chan.state.position_sec(now) >= float(expected_dur)
 
                     trigger_kind: str | None = None
 
@@ -128,7 +142,10 @@ def main() -> int:
                     mpv_dur: float | None = None
                     if mpv_trigger is not None:
                         mpv_reason, mpv_time_pos, mpv_dur = mpv_trigger
-                        trigger_kind = mpv_reason
+                        # NEAR_END is informational; actual advancement must be driven by schedule
+                        # or definitive mpv transitions (EOF/IDLE).
+                        if mpv_reason in ("EOF", "IDLE"):
+                            trigger_kind = mpv_reason
                     elif schedule_trigger:
                         trigger_kind = "SCHEDULE"
 
@@ -149,7 +166,12 @@ def main() -> int:
                                 dur_s = f"{mpv_dur:.2f}" if isinstance(mpv_dur, (int, float)) else "?"
 
                             # Advance only the currently active channel.
-                            info = station.advance_active(now)
+                            # IMPORTANT: never sets started_at=now.
+                            if trigger_kind == "SCHEDULE":
+                                info = station.advance_active(now, reason="SCHEDULE")
+                            else:
+                                # EOF/IDLE: force at least one rollover.
+                                info = station.force_advance_active(now, reason=f"MPV_{trigger_kind}")
 
                             if settings.debug:
                                 print(
@@ -157,7 +179,7 @@ def main() -> int:
                                 )
 
                             last_auto_advanced_from = old_file
-                            player.play(info.current_file, 0.0, call_sign=info.call_sign)
+                            player.play(info.current_file, info.position_sec, call_sign=info.call_sign)
 
                             # Suppress re-triggers while mpv transitions.
                             suppress_until_time = time.time() + 0.5

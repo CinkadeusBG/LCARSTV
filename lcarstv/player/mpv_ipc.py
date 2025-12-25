@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import socket
 import time
 from dataclasses import dataclass, field
 import threading
@@ -15,8 +17,9 @@ class MpvIpcError(RuntimeError):
 class MpvIpcClient:
     """Minimal mpv JSON IPC client.
 
-    Windows implementation uses a named pipe path like:
-        \\.\pipe\lcarstv-mpv
+    Transport:
+    - Windows: named pipe path like: \\.\pipe\lcarstv-mpv
+    - Linux/Pi: Unix domain socket path like: /tmp/lcarstv-mpv.sock
 
     Synchronous request/response. No threads.
     """
@@ -26,6 +29,7 @@ class MpvIpcClient:
     trace: bool = False
 
     _fh: BinaryIO | None = None
+    _sock: socket.socket | None = None
     _next_request_id: int = 1
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
 
@@ -34,10 +38,38 @@ class MpvIpcClient:
         last_err: Exception | None = None
         while time.time() < deadline:
             try:
-                # mpv expects line-delimited JSON. Use binary mode to control buffering.
-                self._fh = open(self.pipe_path, "r+b", buffering=0)
-                return
+                # mpv expects line-delimited JSON.
+                #
+                # Windows named pipes can be opened like files.
+                if os.name == "nt":
+                    self._fh = open(self.pipe_path, "r+b", buffering=0)
+                    self._sock = None
+                    return
+
+                # On Linux, mpv's --input-ipc-server creates a Unix domain socket.
+                # Use an actual socket so reads/writes behave predictably.
+                s: socket.socket | None = None
+                try:
+                    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                    s.settimeout(0.25)
+                    s.connect(self.pipe_path)
+                    # Switch back to blocking mode for our manual read loop.
+                    s.settimeout(None)
+                    self._sock = s
+                    self._fh = None
+                    return
+                except OSError:
+                    # Ensure we don't leak sockets while retrying.
+                    if s is not None:
+                        try:
+                            s.close()
+                        except Exception:
+                            pass
+                    raise
             except OSError as e:
+                # Ensure we don't hold onto a stale transport between retries.
+                self._sock = None
+                self._fh = None
                 last_err = e
                 time.sleep(0.05)
         raise MpvIpcError(f"Failed to connect to mpv IPC pipe {self.pipe_path!r}: {last_err}")
@@ -49,10 +81,42 @@ class MpvIpcClient:
             finally:
                 self._fh = None
 
+        if self._sock is not None:
+            try:
+                self._sock.close()
+            finally:
+                self._sock = None
+
+    def _require_transport(self) -> tuple[BinaryIO | None, socket.socket | None]:
+        if self._fh is None and self._sock is None:
+            raise MpvIpcError("Not connected")
+        return self._fh, self._sock
+
     def _require_fh(self) -> BinaryIO:
         if self._fh is None:
             raise MpvIpcError("Not connected")
         return self._fh
+
+    def _write(self, raw: bytes) -> None:
+        fh, sock = self._require_transport()
+        try:
+            if fh is not None:
+                fh.write(raw)
+                return
+            assert sock is not None
+            sock.sendall(raw)
+        except OSError as e:
+            raise MpvIpcError(f"Failed to write to mpv IPC transport: {e}")
+
+    def _read_byte(self) -> bytes:
+        fh, sock = self._require_transport()
+        try:
+            if fh is not None:
+                return fh.read(1)
+            assert sock is not None
+            return sock.recv(1)
+        except OSError as e:
+            raise MpvIpcError(f"Failed to read from mpv IPC transport: {e}")
 
     def command(self, *cmd: Any, timeout_sec: float = 2.0) -> dict[str, Any]:
         """Send an mpv IPC command and wait for the matching response."""
@@ -87,21 +151,14 @@ class MpvIpcClient:
         if self.debug and do_trace:
             print(f"[debug] mpv >>> {payload}")
 
-        fh = self._require_fh()
-        try:
-            fh.write(raw)
-        except OSError as e:
-            raise MpvIpcError(f"Failed to write to mpv IPC pipe: {e}")
+        self._write(raw)
 
         # Read lines until we see the response with matching request_id.
         # mpv may also send async 'event' messages; ignore them.
         deadline = time.time() + timeout_sec
         buf = bytearray()
         while time.time() < deadline:
-            try:
-                b = fh.read(1)
-            except OSError as e:
-                raise MpvIpcError(f"Failed to read from mpv IPC pipe: {e}")
+            b = self._read_byte()
 
             if not b:
                 time.sleep(0.01)

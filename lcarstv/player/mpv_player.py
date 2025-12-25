@@ -45,6 +45,27 @@ class MpvPlayer:
     # mpv OSD overlay id reserved for the call-sign.
     _call_sign_overlay_id: int = 4242
 
+    # Suppress end-triggers during static burst and immediately after load/seek.
+    _guard_until: float = 0.0
+    _guard_reason: str | None = None
+
+    def set_playback_guard(self, *, seconds: float, reason: str) -> None:
+        seconds = max(0.0, float(seconds))
+        until = time.time() + seconds
+        self._guard_until = max(self._guard_until, until)
+        self._guard_reason = str(reason)
+        if self.debug:
+            ms = int(seconds * 1000)
+            print(f"[debug] guard: set until={self._guard_until:.3f} (+{ms}ms) reason={self._guard_reason}")
+
+    def _guard_active(self) -> bool:
+        return time.time() < float(self._guard_until)
+
+    def playback_guard_active(self) -> bool:
+        """Public read-only guard state for app-level schedule checks."""
+
+        return self._guard_active()
+
     @property
     def current_media_path(self) -> str | None:
         """Last media path requested via `play()`.
@@ -325,6 +346,33 @@ class MpvPlayer:
         if self._ipc is None:
             return None
 
+        # If guarded, suppress triggers, but still update edge state so we don't
+        # immediately fire on guard expiry.
+        if self._guard_active():
+            remaining = float(self._guard_until) - time.time()
+            if self.debug:
+                print(
+                    f"[debug] guard: suppress triggers remaining={max(0.0, remaining):.3f}s reason={self._guard_reason}"
+                )
+            # Best-effort edge updates.
+            eof_reached = self._get_bool_property("eof-reached")
+            if eof_reached is not None:
+                self._last_eof_reached = bool(eof_reached)
+            idle_active = self._get_bool_property("idle-active")
+            self._last_idle_active = bool(idle_active) if idle_active is not None else False
+            tp = self._get_float_property("time-pos")
+            if tp is not None:
+                self._seen_time_pos = True
+            dur_tmp = self.current_duration_sec()
+            near_end_tmp = (
+                tp is not None
+                and dur_tmp is not None
+                and dur_tmp > 0
+                and tp >= (dur_tmp - max(0.0, float(end_epsilon_sec)))
+            )
+            self._last_near_end = bool(near_end_tmp)
+            return None
+
         # Clamp epsilon to a sane non-negative range.
         eps = max(0.0, float(end_epsilon_sec))
 
@@ -386,7 +434,8 @@ class MpvPlayer:
         # --- Trigger A) EOF rising edge ---
         if eof_reached is not None:
             eof_bool = bool(eof_reached)
-            eof_edge = eof_bool and not self._last_eof_reached and (self._seen_active_path or self._seen_time_pos)
+            # Require real playback evidence (`time-pos`) to avoid stale eof states right after load.
+            eof_edge = eof_bool and not self._last_eof_reached and self._seen_time_pos
             self._last_eof_reached = eof_bool
             if eof_edge:
                 self._ended_for_path = self._current_media_path
@@ -394,7 +443,8 @@ class MpvPlayer:
 
         # --- Trigger B) IDLE rising edge (after known active path) ---
         idle_bool = bool(idle_active) if idle_active is not None else False
-        idle_edge = idle_bool and not self._last_idle_active and self._seen_active_path
+        # Require real playback evidence (`time-pos`) and a prior active path.
+        idle_edge = idle_bool and not self._last_idle_active and self._seen_active_path and self._seen_time_pos
         self._last_idle_active = idle_bool
         if idle_edge:
             self._ended_for_path = self._current_media_path
@@ -408,7 +458,7 @@ class MpvPlayer:
             and dur > 0
             and time_pos >= (dur - eps)
         )
-        near_end_edge = bool(near_end) and not self._last_near_end and (self._seen_active_path or self._seen_time_pos)
+        near_end_edge = bool(near_end) and not self._last_near_end and self._seen_time_pos
         self._last_near_end = bool(near_end)
         if near_end_edge:
             self._ended_for_path = self._current_media_path
@@ -456,22 +506,47 @@ class MpvPlayer:
     def pipe_path(self) -> str:
         if os.name == "nt":
             return rf"\\.\pipe\{self.pipe_name}"
-        # Not used yet; Pi/Linux will be added later.
-        return f"/tmp/{self.pipe_name}"
+        # Linux/Pi: mpv expects a Unix domain socket path.
+        # Use a stable name so supervision / scripts can locate it if needed.
+        return f"/tmp/{self.pipe_name}.sock"
+
+    def _cleanup_stale_ipc_path(self) -> None:
+        """Best-effort cleanup of leftover IPC socket on non-Windows.
+
+        If the app or mpv crashes, the socket file may remain, and mpv will
+        fail to bind the next time with "address already in use".
+        """
+
+        if os.name == "nt":
+            return
+
+        try:
+            p = Path(self.pipe_path)
+            if p.exists():
+                p.unlink()
+        except Exception:
+            # Best-effort; do not prevent playback.
+            pass
 
     def start(self) -> None:
         if self._proc is not None:
             return
 
-        if os.name != "nt":
-            raise RuntimeError("Windows mpv IPC integration is implemented first; non-Windows not yet supported")
+        # Non-Windows uses a Unix socket for --input-ipc-server; remove any stale
+        # socket path before starting mpv.
+        self._cleanup_stale_ipc_path()
 
         # Start mpv idle and controllable via IPC.
         # Keep this minimal; no overlays/shaders/UI extras.
         args = [
             self.mpv_exe,
+            # Force fullscreen on all platforms.
+            # Use launch flags (not window manager shortcuts).
+            "--fullscreen",
+            # Optional but helpful for kiosk/fullscreen setups.
+            "--no-border",
             "--idle=yes",
-            "--force-window=yes",
+            "--force-window=no",
             "--no-terminal",
             f"--input-ipc-server={self.pipe_path}",
             "--audio-display=no",
@@ -541,6 +616,9 @@ class MpvPlayer:
         self._wait_for_media_ready(timeout_sec=2.0, poll_interval_sec=0.05)
         self._best_effort_seek(start_sec, retries=10, delay_sec=0.05)
 
+        # Guard window after load+seek to avoid transient end triggers.
+        self.set_playback_guard(seconds=0.75, reason="LOAD_SEEK")
+
         # Overlay must appear after the static burst (if any) and when real content begins.
         if call_sign is not None:
             try:
@@ -565,6 +643,9 @@ class MpvPlayer:
             if static_path.exists():
                 if self.debug:
                     print(f"[debug] static burst start: {self.static_burst_path}")
+
+                # Suppress end triggers during static and immediately after the real tune.
+                self.set_playback_guard(seconds=float(self.static_burst_duration_sec) + 0.75, reason="TUNE")
 
                 # Use loadfile directly here, then wait.
                 if self._proc is None or self._ipc is None:

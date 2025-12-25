@@ -8,6 +8,7 @@ import random
 
 from .config import ChannelsConfig, Settings
 from .channel import ChannelRuntime
+from .duration_cache import DurationCache
 from .models import ChannelState, TuneInfo
 from .scanner import scan_media_dirs
 from .selector import SmartRandomSelector
@@ -30,6 +31,7 @@ class Station:
         now: datetime,
     ) -> "Station":
         store = StateStore(path=repo_root / "data" / "state.json", debug=settings.debug)
+        durations = DurationCache(path=repo_root / "data" / "durations.json", debug=settings.debug)
         persisted = store.load()
         selector = SmartRandomSelector(store=store, state=persisted, debug=settings.debug)
         channels: dict[str, ChannelRuntime] = {}
@@ -95,6 +97,7 @@ class Station:
                 selector=selector,
                 store=store,
                 state=state,
+                durations=durations,
             )
 
         call_signs = channels_cfg.ordered_call_signs()
@@ -123,8 +126,13 @@ class Station:
         print(f"TUNED: {call_sign}")
 
         chan = self.channels[call_sign]
-        chan.sync_to_now(now, debug=self.settings.debug)
+        chan.sync_to_now(now, reason="TUNE_SYNC", debug=self.settings.debug)
         pos = chan.state.position_sec(now)
+
+        if self.settings.debug:
+            print(
+                f"[debug] tune call_sign={call_sign} file={Path(chan.state.current_file).name} started_at={chan.state.started_at.isoformat()} pos={pos:.2f}s"
+            )
         print(f"Airing: {Path(chan.state.current_file).name}")
         print(f"Started at: {chan.state.started_at.isoformat()}")
         print(f"Position: {pos:.2f}s")
@@ -136,11 +144,11 @@ class Station:
             position_sec=pos,
         )
 
-    def advance_active(self, now: datetime) -> TuneInfo:
+    def advance_active(self, now: datetime, *, reason: str = "AUTO_ADVANCE") -> TuneInfo:
         """Immediately advance the active channel to the next file.
 
-        - Selects the next file via SmartRandomSelector (respecting cooldown rules).
-        - Sets started_at = now so playback begins at position 0.
+        - Deterministic: advances by real rollovers, never sets started_at=now.
+        - Advances multiple items if the channel is behind (catch-up).
         - Persists current_file/started_at and scheduler state.
         """
 
@@ -149,35 +157,42 @@ class Station:
             raise KeyError(call_sign)
 
         chan = self.channels[call_sign]
-        old_file = chan.state.current_file
-        current_path = Path(old_file)
-
-        next_path = chan.selector.pick_next(
-            call_sign=call_sign,
-            files=chan.files,
-            cooldown=chan.cooldown,
-            current_file=current_path,
-        )
-
-        chan.state.current_file = str(next_path)
-        chan.state.started_at = now
-
-        # Persist live state.
-        st = chan.selector.state
-        ch = st.channels.get(call_sign)
-        if ch is not None:
-            ch.current_file = chan.state.current_file
-            ch.started_at = chan.state.started_at
-            chan.store.save(st)
-
-        if self.settings.debug:
-            print(
-                f"[debug] {call_sign} advance_active: {Path(old_file).name} -> {next_path.name} started_at={now.isoformat()}"
-            )
-
+        chan.sync_to_now(now, reason=reason, debug=self.settings.debug)
+        pos = chan.state.position_sec(now)
         return TuneInfo(
             call_sign=call_sign,
             current_file=chan.state.current_file,
             started_at=chan.state.started_at,
-            position_sec=0.0,
+            position_sec=pos,
+        )
+
+    def force_advance_active(self, now: datetime, *, reason: str) -> TuneInfo:
+        """Force at least one rollover for the active channel.
+
+        Used for mpv EOF/IDLE/NEAR_END triggers where the player says the file has ended.
+        Deterministic rule: started_at advances by duration(current_file) (cached ffprobe).
+
+        Notes:
+        - If the channel is already behind, this may advance multiple items.
+        - If the channel is not behind (e.g. NEAR_END slightly early), this will
+          still advance one item.
+        """
+
+        call_sign = self.active_call_sign
+        if call_sign not in self.channels:
+            raise KeyError(call_sign)
+
+        chan = self.channels[call_sign]
+        dur = chan.durations.get_duration_sec(
+            chan.state.current_file, default_duration_sec=float(self.settings.default_duration_sec)
+        )
+        forced_now = max(now, chan.state.started_at + timedelta(seconds=float(dur) + 0.001))
+        chan.sync_to_now(forced_now, reason=reason, debug=self.settings.debug)
+
+        pos = chan.state.position_sec(now)
+        return TuneInfo(
+            call_sign=call_sign,
+            current_file=chan.state.current_file,
+            started_at=chan.state.started_at,
+            position_sec=pos,
         )

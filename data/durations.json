@@ -1,0 +1,110 @@
+{
+  "durations": {
+    "z:/media/kdsn/star trek ds9 s03e25 - facets.avi": {
+      "duration_sec": 2729.396063,
+      "mtime_ns": 1701296534807739600,
+      "size": 367638658
+    },
+    "z:/media/kdsn/star trek ds9 s05e10 - rapture.avi": {
+      "duration_sec": 2727.894561,
+      "mtime_ns": 1701296589990611900,
+      "size": 362245132
+    },
+    "z:/media/kdsn/star trek ds9 s06e05 - favor the bold.avi": {
+      "duration_sec": 2716.88355,
+      "mtime_ns": 1701289692748176100,
+      "size": 367080512
+    },
+    "z:/media/kdsn/star trek ds9 s06e07 - you are cordially invited.avi": {
+      "duration_sec": 2716.88355,
+      "mtime_ns": 1701289398859432500,
+      "size": 367078692
+    },
+    "z:/media/kdsn/star trek ds9 s07e24 - the dogs of war.avi": {
+      "duration_sec": 2707.874541,
+      "mtime_ns": 1701285201374514000,
+      "size": 362389788
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e25.resolutions.mkv": {
+      "duration_sec": 2755.05,
+      "mtime_ns": 1701292662766774700,
+      "size": 214124967
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e18.the.killing.game.part.i.mkv": {
+      "duration_sec": 2760.298,
+      "mtime_ns": 1701292682905083800,
+      "size": 217290219
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e01.night.mkv": {
+      "duration_sec": 2760.042,
+      "mtime_ns": 1701292729133814400,
+      "size": 217078350
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e21.someone.to.watch.over.me.mkv": {
+      "duration_sec": 2759.914,
+      "mtime_ns": 1701292729213832500,
+      "size": 205467706
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e22.muse.mkv": {
+      "duration_sec": 2638.058,
+      "mtime_ns": 1701288988695087800,
+      "size": 214026388
+    },
+    "z:/media/wmov/star trek ii the wrath of khan (1982).mp4": {
+      "duration_sec": 6781.93,
+      "mtime_ns": 1485670736470377500,
+      "size": 1779003933
+    },
+    "z:/media/wmov/star trek iii the search for spock (1984)  [1080p x265 q22 fs97 joy].mkv": {
+      "duration_sec": 6314.1,
+      "mtime_ns": 1689387756903651300,
+      "size": 2512868706
+    },
+    "z:/media/wmov/star trek iv the voyage home (1986)  [1080p x265 10bit fs95 joy].mkv": {
+      "duration_sec": 7131.21,
+      "mtime_ns": 1689386872155457900,
+      "size": 1945704636
+    },
+    "z:/media/wmov/star.trek.generations.1994.remastered.1080p.bluray.x265-rbg.mp4": {
+      "duration_sec": 7078.26,
+      "mtime_ns": 1689386194176404900,
+      "size": 1973656522
+    },
+    "z:/media/wmov/star.trek.insurrection.1998.1080p.bluray.av1.opus.multi4-dav1nci.mkv": {
+      "duration_sec": 6181.832,
+      "mtime_ns": 1689387131262603400,
+      "size": 2816554580
+    },
+    "z:/media/wmov/star.trek.the.motion.picture.the.directors.edition.1979.1080p.bluray.x265-rbg.mp4": {
+      "duration_sec": 8203.028167,
+      "mtime_ns": 1689386026446695400,
+      "size": 2286778228
+    },
+    "z:/media/wmov/star.trek.v.the.final.frontier.bluray.1080p.x264.5.1.judas.mp4": {
+      "duration_sec": 6393.258667,
+      "mtime_ns": 1689387908126216600,
+      "size": 2029752544
+    },
+    "z:/media/wtng/star.trek.tng.s01e01-e02 - encounter at farpoint.mkv": {
+      "duration_sec": 5481.898,
+      "mtime_ns": 1766603031306906400,
+      "size": 653635639
+    },
+    "z:/media/wtng/star.trek.tng.s05e12 - violations.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766600525652636900,
+      "size": 326137293
+    },
+    "z:/media/wtng/star.trek.tng.s06e14 - face of the enemy.mkv": {
+      "duration_sec": 2709.738,
+      "mtime_ns": 1766602681317057300,
+      "size": 323589334
+    },
+    "z:/media/wtng/star.trek.tng.s06e16 - birthright part i.mkv": {
+      "duration_sec": 2712.725,
+      "mtime_ns": 1766602447635740600,
+      "size": 321673162
+    }
+  },
+  "version": 1
+}
