@@ -23,6 +23,7 @@ class MpvIpcClient:
 
     pipe_path: str
     debug: bool = False
+    trace: bool = False
 
     _fh: BinaryIO | None = None
     _next_request_id: int = 1
@@ -61,7 +62,19 @@ class MpvIpcClient:
         with self._lock:
             return self._command_locked(*cmd, timeout_sec=timeout_sec)
 
-    def _command_locked(self, *cmd: Any, timeout_sec: float = 2.0) -> dict[str, Any]:
+    def trace_command(self, *cmd: Any, timeout_sec: float = 2.0) -> dict[str, Any]:
+        """Send an mpv command with request/response tracing regardless of `trace`.
+
+        Use this for high-signal operations (loadfile/seek/quit) or debug-only state
+        transitions. Property polling should use `command()` so it stays quiet.
+        """
+
+        with self._lock:
+            return self._command_locked(*cmd, timeout_sec=timeout_sec, force_trace=True)
+
+    def _command_locked(
+        self, *cmd: Any, timeout_sec: float = 2.0, force_trace: bool = False
+    ) -> dict[str, Any]:
         """Implementation for `command()`. Call only while holding `_lock`."""
 
         req_id = self._next_request_id
@@ -69,7 +82,9 @@ class MpvIpcClient:
 
         payload: dict[str, Any] = {"command": list(cmd), "request_id": req_id}
         raw = (json.dumps(payload, separators=(",", ":")) + "\n").encode("utf-8")
-        if self.debug:
+
+        do_trace = bool(self.trace or force_trace)
+        if self.debug and do_trace:
             print(f"[debug] mpv >>> {payload}")
 
         fh = self._require_fh()
@@ -103,7 +118,7 @@ class MpvIpcClient:
                     continue
 
                 if "request_id" in msg and msg.get("request_id") == req_id:
-                    if self.debug:
+                    if self.debug and do_trace:
                         print(f"[debug] mpv <<< {msg}")
                     return msg
 

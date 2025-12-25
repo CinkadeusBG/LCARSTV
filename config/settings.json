@@ -2,5 +2,7 @@
   "extensions": [".mkv", ".mp4", ".avi", ".mov", ".m4v"],
   "default_duration_sec": 1800,
   "debug": true,
-  "static_burst_path": "Z:/media/artifacts/static.mp4"
+  "ipc_trace": false,
+  "static_burst_path": "Z:/media/artifacts/static.mp4",
+  "end_epsilon_sec": 0.25
 }

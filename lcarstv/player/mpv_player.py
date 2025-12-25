@@ -15,6 +15,7 @@ class MpvPlayer:
     """Starts and reuses a single mpv process, controlling it via JSON IPC."""
 
     debug: bool = False
+    ipc_trace: bool = False
     pipe_name: str = "lcarstv-mpv"
     mpv_exe: str = "mpv"
 
@@ -24,11 +25,34 @@ class MpvPlayer:
     _proc: subprocess.Popen[str] | None = None
     _ipc: MpvIpcClient | None = None
 
+    # Playback state tracking for edge-triggered EOF detection.
+    _current_media_path: str | None = None
+    _seen_active_path: bool = False
+    _seen_time_pos: bool = False
+    _last_eof_reached: bool = False
+    _last_idle_active: bool = False
+    _last_near_end: bool = False
+    _ended_for_path: str | None = None
+
+    # Cached metadata to avoid polling spam.
+    _cached_duration_for_path: str | None = None
+    _cached_duration_sec: float | None = None
+    _cached_duration_last_fetch_time: float = 0.0
+
     # Used for debug-only "cleared" logging without interfering with playback.
     _osd_token: int = 0
 
     # mpv OSD overlay id reserved for the call-sign.
     _call_sign_overlay_id: int = 4242
+
+    @property
+    def current_media_path(self) -> str | None:
+        """Last media path requested via `play()`.
+
+        This is used by the app loop to debounce auto-advance triggers.
+        """
+
+        return self._current_media_path
 
     def _clear_call_sign_osd(self) -> None:
         if self._ipc is None:
@@ -131,6 +155,267 @@ class MpvPlayer:
 
         return False
 
+    # --- Best-effort property helpers (never raise) ---
+    def _get_property(self, name: str, *, timeout_sec: float = 1.0) -> dict:
+        if self._ipc is None:
+            return {"error": "no-ipc", "data": None}
+        try:
+            # Property polling should be quiet; IPC trace is for high-signal events.
+            return self._ipc.command("get_property", name, timeout_sec=timeout_sec)
+        except Exception:
+            return {"error": "exception", "data": None}
+
+    def _get_bool_property(self, name: str) -> bool | None:
+        resp = self._get_property(name)
+        if resp.get("error") in (None, "success"):
+            data = resp.get("data")
+            if isinstance(data, bool):
+                return data
+        return None
+
+    def _get_float_property(self, name: str) -> float | None:
+        resp = self._get_property(name)
+        if resp.get("error") in (None, "success"):
+            data = resp.get("data")
+            if isinstance(data, (int, float)):
+                return float(data)
+        return None
+
+    def _get_str_property(self, name: str) -> str | None:
+        resp = self._get_property(name)
+        if resp.get("error") in (None, "success"):
+            data = resp.get("data")
+            if isinstance(data, str):
+                return data
+        return None
+
+    def current_duration_sec(self) -> float | None:
+        """Best-effort duration of the currently loaded media in seconds."""
+
+        if self._current_media_path is None:
+            return None
+
+        # Cache per file. If duration wasn't available yet, retry occasionally.
+        if self._cached_duration_for_path == self._current_media_path:
+            if self._cached_duration_sec is not None:
+                return self._cached_duration_sec
+
+            # If duration is unknown for this path, retry with a slow backoff.
+            # (Prevents spamming IPC while still eventually learning duration.)
+            if (time.time() - float(self._cached_duration_last_fetch_time)) < 1.0:
+                return None
+
+        dur = self._get_float_property("duration")
+        self._cached_duration_last_fetch_time = time.time()
+        if dur is not None and dur > 0:
+            self._cached_duration_for_path = self._current_media_path
+            self._cached_duration_sec = float(dur)
+        else:
+            # Avoid hammering duration if mpv isn't ready yet; cache negative for this path.
+            self._cached_duration_for_path = self._current_media_path
+            self._cached_duration_sec = None
+
+        return self._cached_duration_sec
+
+    def poll_end_of_file(self) -> bool:
+        """Return True once when mpv reaches EOF for the currently loaded file.
+
+        Edge-triggered and guarded to avoid false positives when mpv is idling
+        on startup.
+
+        Preferred signal: `eof-reached` property.
+        Fallback: transition to `idle-active` after previously having an active `path`.
+        """
+
+        if self._ipc is None:
+            return False
+
+        # Minimize property polling:
+        # - Once we have confirmed playback actually started (via time-pos or path), we
+        #   avoid repeatedly querying those properties every cycle.
+        # - We still prefer eof-reached when available, which is a single bool poll.
+
+        # If we haven't yet observed evidence of active playback, try to learn it.
+        if not (self._seen_active_path or self._seen_time_pos):
+            # `time-pos` is a good signal that playback started.
+            tp = self._get_float_property("time-pos")
+            if tp is not None:
+                self._seen_time_pos = True
+            else:
+                # Fall back to `path` if time-pos isn't available yet.
+                p = self._get_str_property("path")
+                if p:
+                    self._seen_active_path = True
+
+        # If we do not currently have a media loaded (from our perspective), never
+        # treat idle as an EOF event. (Still update edge state below.)
+        if self._current_media_path is None:
+            eof_reached = self._get_bool_property("eof-reached")
+            if eof_reached is not None:
+                self._last_eof_reached = bool(eof_reached)
+                return False
+            idle_active = self._get_bool_property("idle-active")
+            self._last_idle_active = bool(idle_active) if idle_active is not None else False
+            return False
+
+        # Preferred: eof-reached rising edge.
+        eof_reached = self._get_bool_property("eof-reached")
+        if eof_reached is not None:
+            triggered = bool(eof_reached) and not self._last_eof_reached and (self._seen_active_path or self._seen_time_pos)
+            self._last_eof_reached = bool(eof_reached)
+            if triggered:
+                # Ensure we only trigger once per loaded file.
+                if self._current_media_path and self._ended_for_path == self._current_media_path:
+                    return False
+                self._ended_for_path = self._current_media_path
+                return True
+            return False
+
+        # Fallback heuristic.
+        idle_active = self._get_bool_property("idle-active")
+        time_pos = self._get_float_property("time-pos")
+        if time_pos is not None:
+            self._seen_time_pos = True
+        # Only query `path` in fallback mode if we haven't already seen it.
+        path = None
+        if not self._seen_active_path:
+            path = self._get_str_property("path")
+            if path:
+                self._seen_active_path = True
+        idle_active_bool = bool(idle_active) if idle_active is not None else False
+
+        # Rising edge into idle while we previously had a real path loaded.
+        triggered = (
+            self._seen_active_path
+            and self._seen_time_pos
+            and idle_active_bool
+            and not self._last_idle_active
+            and (not path or time_pos is None)
+        )
+
+        self._last_idle_active = idle_active_bool
+
+        if triggered:
+            if self._current_media_path and self._ended_for_path == self._current_media_path:
+                return False
+            self._ended_for_path = self._current_media_path
+            return True
+
+        return False
+
+    def poll_end_of_episode(
+        self, *, end_epsilon_sec: float = 0.25
+    ) -> tuple[str, float | None, float | None] | None:
+        """Return a trigger tuple once when the currently loaded media ends.
+
+        Triggers (edge-detected; fires once per loaded file):
+        - EOF: `eof-reached` rising edge
+        - IDLE: `idle-active` rising edge after we previously observed an active `path`
+        - NEAR_END: `time-pos >= duration - end_epsilon_sec` (when both props are available)
+
+        Returns:
+            (reason, time_pos_sec, duration_sec) where reason is one of
+            {"EOF", "IDLE", "NEAR_END"}, or None if no trigger.
+
+        Notes:
+        - This method is intended to be polled at a low rate (e.g., 5Hz).
+        - Property polling is kept quiet; IPC trace is reserved for high-signal commands.
+        """
+
+        if self._ipc is None:
+            return None
+
+        # Clamp epsilon to a sane non-negative range.
+        eps = max(0.0, float(end_epsilon_sec))
+
+        # If we haven't yet observed evidence of active playback, try to learn it.
+        # (Needed so idle on startup doesn't look like an end-of-episode.)
+        if not (self._seen_active_path or self._seen_time_pos):
+            tp0 = self._get_float_property("time-pos")
+            if tp0 is not None:
+                self._seen_time_pos = True
+            else:
+                p0 = self._get_str_property("path")
+                if p0:
+                    self._seen_active_path = True
+
+        # If we do not currently have a media loaded (from our perspective), never
+        # treat idle or near-end as an end event. Still update edge state.
+        if self._current_media_path is None:
+            eof_reached = self._get_bool_property("eof-reached")
+            if eof_reached is not None:
+                self._last_eof_reached = bool(eof_reached)
+            idle_active = self._get_bool_property("idle-active")
+            self._last_idle_active = bool(idle_active) if idle_active is not None else False
+            self._last_near_end = False
+            return None
+
+        # Poll the high-signal bools first.
+        eof_reached = self._get_bool_property("eof-reached")
+        idle_active = self._get_bool_property("idle-active")
+
+        # Track playback evidence.
+        time_pos = self._get_float_property("time-pos")
+        if time_pos is not None:
+            self._seen_time_pos = True
+
+        # Ensure we have observed a real path at least once for IDLE gating.
+        if not self._seen_active_path:
+            p = self._get_str_property("path")
+            if p:
+                self._seen_active_path = True
+
+        # If we've already ended for this file, don't trigger again.
+        if self._ended_for_path is not None and self._ended_for_path == self._current_media_path:
+            # Still update edges so state stays consistent.
+            if eof_reached is not None:
+                self._last_eof_reached = bool(eof_reached)
+            idle_bool = bool(idle_active) if idle_active is not None else False
+            self._last_idle_active = idle_bool
+            # Update near-end edge state.
+            dur_tmp = self.current_duration_sec()
+            near_end_tmp = (
+                time_pos is not None
+                and dur_tmp is not None
+                and dur_tmp > 0
+                and time_pos >= (dur_tmp - eps)
+            )
+            self._last_near_end = bool(near_end_tmp)
+            return None
+
+        # --- Trigger A) EOF rising edge ---
+        if eof_reached is not None:
+            eof_bool = bool(eof_reached)
+            eof_edge = eof_bool and not self._last_eof_reached and (self._seen_active_path or self._seen_time_pos)
+            self._last_eof_reached = eof_bool
+            if eof_edge:
+                self._ended_for_path = self._current_media_path
+                return ("EOF", time_pos, self.current_duration_sec())
+
+        # --- Trigger B) IDLE rising edge (after known active path) ---
+        idle_bool = bool(idle_active) if idle_active is not None else False
+        idle_edge = idle_bool and not self._last_idle_active and self._seen_active_path
+        self._last_idle_active = idle_bool
+        if idle_edge:
+            self._ended_for_path = self._current_media_path
+            return ("IDLE", time_pos, self.current_duration_sec())
+
+        # --- Trigger C) NEAR_END rising edge ---
+        dur = self.current_duration_sec()
+        near_end = (
+            time_pos is not None
+            and dur is not None
+            and dur > 0
+            and time_pos >= (dur - eps)
+        )
+        near_end_edge = bool(near_end) and not self._last_near_end and (self._seen_active_path or self._seen_time_pos)
+        self._last_near_end = bool(near_end)
+        if near_end_edge:
+            self._ended_for_path = self._current_media_path
+            return ("NEAR_END", time_pos, dur)
+
+        return None
+
     def _best_effort_seek(self, start_sec: float, *, retries: int = 10, delay_sec: float = 0.05) -> bool:
         """Try to seek; retry briefly; never raise.
 
@@ -154,7 +439,9 @@ class MpvPlayer:
             pass
 
         for attempt in range(max(1, int(retries))):
-            resp = self._ipc.command("seek", start_sec, "absolute", "exact", timeout_sec=10.0)
+            # High-signal command: allow tracing if enabled.
+            cmd = self._ipc.trace_command if self.ipc_trace else self._ipc.command
+            resp = cmd("seek", start_sec, "absolute", "exact", timeout_sec=10.0)
             if resp.get("error") in (None, "success"):
                 return True
 
@@ -188,9 +475,19 @@ class MpvPlayer:
             "--no-terminal",
             f"--input-ipc-server={self.pipe_path}",
             "--audio-display=no",
+            # Disable subtitles globally.
+            # - Ensure embedded subtitle tracks (e.g., MKV) never render.
+            # - Ensure mpv never auto-loads external subs.
+            "--sid=no",
+            "--sub-auto=no",
             "--keep-open=no",
             "--volume=100",
         ]
+
+        if self.debug:
+            # Print the full command line used to launch mpv.
+            # Using list2cmdline preserves quoting rules on Windows.
+            print(f"[debug] mpv: launch args: {subprocess.list2cmdline(args)}")
 
         # Detach from console output; we log IPC ourselves when debug enabled.
         self._proc = subprocess.Popen(
@@ -201,7 +498,7 @@ class MpvPlayer:
             text=True,
         )
 
-        self._ipc = MpvIpcClient(pipe_path=self.pipe_path, debug=self.debug)
+        self._ipc = MpvIpcClient(pipe_path=self.pipe_path, debug=self.debug, trace=self.ipc_trace)
         self._ipc.connect(timeout_sec=3.0)
 
     def play(self, file_path: str, start_sec: float, *, call_sign: str | None = None) -> None:
@@ -219,9 +516,25 @@ class MpvPlayer:
             return
 
         # Safer than relying on loadfile's "start=" option (varies by mpv build).
-        resp = self._ipc.command("loadfile", file_path, "replace", timeout_sec=10.0)
+        # High-signal command: allow tracing if enabled.
+        cmd = self._ipc.trace_command if self.ipc_trace else self._ipc.command
+        resp = cmd("loadfile", file_path, "replace", timeout_sec=10.0)
         if resp.get("error") not in (None, "success"):
             raise MpvIpcError(f"mpv loadfile failed: {resp}")
+
+        # Record last loaded media path for EOF edge-detection.
+        self._current_media_path = str(file_path)
+        self._seen_active_path = False
+        self._seen_time_pos = False
+        self._last_eof_reached = False
+        self._last_idle_active = False
+        self._last_near_end = False
+        self._ended_for_path = None
+
+        # Reset duration cache for new media.
+        self._cached_duration_for_path = None
+        self._cached_duration_sec = None
+        self._cached_duration_last_fetch_time = 0.0
 
         # Wait briefly for the file to become seekable, then seek best-effort.
         # If we can't seek, keep running and just play from 0.
@@ -256,7 +569,8 @@ class MpvPlayer:
                 # Use loadfile directly here, then wait.
                 if self._proc is None or self._ipc is None:
                     self.start()
-                self._ipc.command("loadfile", str(static_path), "replace", timeout_sec=10.0)
+                cmd = self._ipc.trace_command if self.ipc_trace else self._ipc.command
+                cmd("loadfile", str(static_path), "replace", timeout_sec=10.0)
                 time.sleep(max(0.0, float(self.static_burst_duration_sec)))
 
                 if self.debug:
@@ -277,12 +591,22 @@ class MpvPlayer:
             # best-effort
             pass
 
+        # Reset EOF tracking so idle doesn't look like EOF.
+        self._current_media_path = None
+        self._seen_active_path = False
+        self._seen_time_pos = False
+        self._last_eof_reached = False
+        self._last_idle_active = False
+        self._last_near_end = False
+        self._ended_for_path = None
+
     def close(self) -> None:
         # Best-effort shutdown. We don't want threads or complex supervision.
         try:
             if self._ipc is not None:
                 try:
-                    self._ipc.command("quit", timeout_sec=1.0)
+                    cmd = self._ipc.trace_command if self.ipc_trace else self._ipc.command
+                    cmd("quit", timeout_sec=1.0)
                 except Exception:
                     pass
         finally:
@@ -300,3 +624,21 @@ class MpvPlayer:
                         pass
                 finally:
                     self._proc = None
+
+        # Defensive: clear any remembered playback state.
+        self._current_media_path = None
+        self._seen_active_path = False
+        self._seen_time_pos = False
+        self._last_eof_reached = False
+        self._last_idle_active = False
+        self._last_near_end = False
+        self._ended_for_path = None
+
+    def current_mpv_path(self) -> str | None:
+        """Best-effort mpv-reported `path` for suppression/debouncing.
+
+        This can differ briefly from `current_media_path` right after `loadfile`
+        while mpv is transitioning.
+        """
+
+        return self._get_str_property("path")

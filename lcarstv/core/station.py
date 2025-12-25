@@ -135,3 +135,49 @@ class Station:
             started_at=chan.state.started_at,
             position_sec=pos,
         )
+
+    def advance_active(self, now: datetime) -> TuneInfo:
+        """Immediately advance the active channel to the next file.
+
+        - Selects the next file via SmartRandomSelector (respecting cooldown rules).
+        - Sets started_at = now so playback begins at position 0.
+        - Persists current_file/started_at and scheduler state.
+        """
+
+        call_sign = self.active_call_sign
+        if call_sign not in self.channels:
+            raise KeyError(call_sign)
+
+        chan = self.channels[call_sign]
+        old_file = chan.state.current_file
+        current_path = Path(old_file)
+
+        next_path = chan.selector.pick_next(
+            call_sign=call_sign,
+            files=chan.files,
+            cooldown=chan.cooldown,
+            current_file=current_path,
+        )
+
+        chan.state.current_file = str(next_path)
+        chan.state.started_at = now
+
+        # Persist live state.
+        st = chan.selector.state
+        ch = st.channels.get(call_sign)
+        if ch is not None:
+            ch.current_file = chan.state.current_file
+            ch.started_at = chan.state.started_at
+            chan.store.save(st)
+
+        if self.settings.debug:
+            print(
+                f"[debug] {call_sign} advance_active: {Path(old_file).name} -> {next_path.name} started_at={now.isoformat()}"
+            )
+
+        return TuneInfo(
+            call_sign=call_sign,
+            current_file=chan.state.current_file,
+            started_at=chan.state.started_at,
+            position_sec=0.0,
+        )

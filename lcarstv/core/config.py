@@ -29,7 +29,9 @@ class Settings:
     default_duration_sec: float
     default_cooldown: int
     debug: bool
+    ipc_trace: bool
     static_burst_path: Path | None
+    end_epsilon_sec: float
 
 
 def load_channels_config(path: Path) -> ChannelsConfig:
@@ -54,12 +56,16 @@ def load_settings(path: Path) -> Settings:
     default_duration_sec = float(data.get("default_duration_sec", 1800))
     default_cooldown = int(data.get("default_cooldown", 10))
     debug = bool(data.get("debug", False))
+    ipc_trace = bool(data.get("ipc_trace", False))
     static_burst_raw = data.get("static_burst_path")
     static_burst_path = Path(static_burst_raw) if static_burst_raw else None
+    end_epsilon_sec = float(data.get("end_epsilon_sec", 0.25))
     return Settings(
         extensions=extensions,
         default_duration_sec=default_duration_sec,
         default_cooldown=default_cooldown,
         debug=debug,
+        ipc_trace=ipc_trace,
         static_burst_path=static_burst_path,
+        end_epsilon_sec=end_epsilon_sec,
     )
