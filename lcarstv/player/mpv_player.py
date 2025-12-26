@@ -117,8 +117,18 @@ class MpvPlayer:
         #  - \shad0: no shadow
         # For format=ass-events, mpv expects the *Text* portion for each ASS event,
         # one per line. (Do NOT include the full "Dialogue: ..." header.)
-        # Font size target: ~75% larger than initial (28 -> 49).
-        ass_text = rf"{{\an9\fnConsolas\fs49\1c&H00FF00&\bord2\3c&H000000&\shad0}}{text}"
+
+        # Font size target: 75% larger than the baseline (28 -> 49).
+        base_font_size = 28
+        font_scale = 1.75
+        font_size = max(1, int(round(base_font_size * font_scale)))
+
+        # Light stroke around the letters (no background box).
+        outline_px = 2
+
+        ass_text = (
+            rf"{{\an9\fnConsolas\fs{font_size}\1c&H00FF00&\bord{outline_px}\3c&H000000&\shad0}}{text}"
+        )
 
         # Replace the overlay each time (same id).
         self._ipc.command("osd-overlay", self._call_sign_overlay_id, "ass-events", ass_text, timeout_sec=2.0)
