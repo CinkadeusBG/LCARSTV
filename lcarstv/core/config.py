@@ -5,6 +5,47 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+def resolve_profile_config_path(*, repo_root: Path, base_name: str, profile: str | None) -> tuple[Path, str]:
+    """Return the config path to use for a given base file name and profile.
+
+    Resolution order:
+    1) config/{base_name}.{profile}.json if profile is provided and file exists
+    2) config/{base_name}.json
+
+    Returns (path, reason) where reason is "profile" or "fallback".
+    """
+
+    config_dir = repo_root / "config"
+    if profile:
+        prof = str(profile).strip().lower()
+        prof_path = config_dir / f"{base_name}.{prof}.json"
+        if prof_path.exists():
+            return prof_path, "profile"
+    return config_dir / f"{base_name}.json", "fallback"
+
+
+def load_channels(*, repo_root: Path, profile: str | None = None, path_override: Path | None = None) -> ChannelsConfig:
+    """Load channels config honoring per-profile files and optional overrides."""
+
+    if path_override is not None:
+        print(f"[config] profile={profile or '-'} channels={path_override} (override)")
+        return load_channels_config(path_override)
+    path, reason = resolve_profile_config_path(repo_root=repo_root, base_name="channels", profile=profile)
+    print(f"[config] profile={profile or '-'} channels={path} ({reason})")
+    return load_channels_config(path)
+
+
+def load_settings_profile(*, repo_root: Path, profile: str | None = None, path_override: Path | None = None) -> Settings:
+    """Load settings config honoring per-profile files and optional overrides."""
+
+    if path_override is not None:
+        print(f"[config] profile={profile or '-'} settings={path_override} (override)")
+        return load_settings(path_override)
+    path, reason = resolve_profile_config_path(repo_root=repo_root, base_name="settings", profile=profile)
+    print(f"[config] profile={profile or '-'} settings={path} ({reason})")
+    return load_settings(path)
+
+
 @dataclass(frozen=True)
 class BlockConfig:
     id: str

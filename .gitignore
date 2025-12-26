@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.pyo
+
+.pytest_cache/
+.ruff_cache/
+
+# venvs
+.venv/
+venv/
+
+# editor
+.vscode/

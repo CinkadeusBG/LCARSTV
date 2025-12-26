@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import os
 import time
 from pathlib import Path
 
 from lcarstv.core.clock import now_utc
-from lcarstv.core.config import load_channels_config, load_settings
+from lcarstv.core.config import load_channels, load_settings_profile
 from lcarstv.core.station import Station
 from lcarstv.input.keyboard import KeyboardInput
 from lcarstv.player import MpvPlayer
@@ -13,6 +14,25 @@ from lcarstv.player import MpvPlayer
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="lcarstv")
+    default_profile = "windows" if os.name == "nt" else "pi"
+    parser.add_argument(
+        "--profile",
+        choices=("windows", "pi"),
+        default=default_profile,
+        help=f"Select runtime/config profile (default: {default_profile})",
+    )
+    parser.add_argument(
+        "--channels",
+        type=str,
+        default=None,
+        help="Override channels config path (takes precedence over profile).",
+    )
+    parser.add_argument(
+        "--settings",
+        type=str,
+        default=None,
+        help="Override settings config path (takes precedence over profile).",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -25,8 +45,12 @@ def main() -> int:
     args = _parse_args()
 
     repo_root = Path(__file__).resolve().parents[1]
-    settings = load_settings(repo_root / "config" / "settings.json")
-    channels_cfg = load_channels_config(repo_root / "config" / "channels.json")
+
+    settings_path = Path(args.settings).expanduser() if args.settings else None
+    channels_path = Path(args.channels).expanduser() if args.channels else None
+
+    settings = load_settings_profile(repo_root=repo_root, profile=args.profile, path_override=settings_path)
+    channels_cfg = load_channels(repo_root=repo_root, profile=args.profile, path_override=channels_path)
 
     station = Station.from_configs(
         channels_cfg=channels_cfg,
@@ -37,7 +61,7 @@ def main() -> int:
 
     inp = KeyboardInput()
     print("LCARSTV dry-run" if args.dry_run else "LCARSTV playback")
-    print("Controls: PageUp=Channel Up, PageDown=Channel Down, Q=Quit")
+    print("Controls: PageUp/Up=Channel Up, PageDown/Down=Channel Down, Q=Quit")
     print()
 
     player: MpvPlayer | None = None
@@ -216,5 +240,6 @@ def main() -> int:
             # low CPU polling loop; no threads.
             time.sleep(0.05)
     finally:
+        inp.close()
         if player is not None:
             player.close()
