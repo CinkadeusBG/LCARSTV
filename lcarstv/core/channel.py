@@ -28,9 +28,24 @@ class ChannelRuntime:
         if ch is not None:
             ch.current_file = self.state.current_file
             ch.started_at = self.state.started_at
+            # Persist scheduler and live state together.
+            # Scheduler state may have been mutated by selector.pick_next(...save=False).
             self.store.save(st)
 
-    def sync_to_now(self, now: datetime, *, reason: str = "SYNC", debug: bool = False) -> int:
+    def _persist_live_state_if(self, *, persist: bool) -> bool:
+        if not persist:
+            return False
+        self._persist_live_state()
+        return True
+
+    def sync_to_now(
+        self,
+        now: datetime,
+        *,
+        reason: str = "SYNC",
+        debug: bool = False,
+        persist: bool = True,
+    ) -> int:
         """Advance (rollover) until the current airing content contains `now`.
 
         Deterministic invariant:
@@ -52,10 +67,7 @@ class ChannelRuntime:
             )
             elapsed = (now - self.state.started_at).total_seconds()
 
-            if debug:
-                print(
-                    f"[debug] {self.call_sign} sync: now={now.isoformat()} started_at={self.state.started_at.isoformat()} elapsed={elapsed:.2f}s dur={dur:.2f}s file={Path(current_file).name}"
-                )
+            # Keep debug output high-signal: per-rollover logs are printed below.
 
             if elapsed < dur:
                 return rollovers
@@ -66,6 +78,15 @@ class ChannelRuntime:
             # Advance time by the just-finished file duration.
             self.state.started_at = self.state.started_at + timedelta(seconds=float(dur))
 
+            # Guardrail: started_at must never go into the future, otherwise revisits
+            # will clamp position to 0 forever.
+            if self.state.started_at > now:
+                if debug:
+                    print(
+                        f"[debug] ERROR advance produced future started_at; clamping call_sign={self.call_sign} started_at={self.state.started_at.isoformat()} now={now.isoformat()}"
+                    )
+                self.state.started_at = now
+
             # Advance to next file.
             current_path = Path(old_file)
             next_path = self.selector.pick_next(
@@ -73,13 +94,16 @@ class ChannelRuntime:
                 files=self.files,
                 cooldown=self.cooldown,
                 current_file=current_path,
+                persist=persist,
+                # We persist scheduler+live state as a single write below.
+                save=False,
             )
             self.state.current_file = str(next_path)
 
-            self._persist_live_state()
+            persisted = self._persist_live_state_if(persist=persist)
             rollovers += 1
 
             if debug:
                 print(
-                    f"[debug] advance reason={reason} call_sign={self.call_sign} {Path(old_file).name} -> {Path(self.state.current_file).name} {old_started.isoformat()} -> {self.state.started_at.isoformat()}"
+                    f"[debug] advance reason={reason} call_sign={self.call_sign} {Path(old_file).name} -> {Path(self.state.current_file).name} {old_started.isoformat()} -> {self.state.started_at.isoformat()} persisted={'yes' if persisted else 'no'}"
                 )

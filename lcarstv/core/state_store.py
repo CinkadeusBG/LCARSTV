@@ -4,6 +4,8 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from contextlib import contextmanager
+import threading
 from typing import Any
 
 from .clock import parse_iso_utc, to_iso_utc
@@ -64,6 +66,33 @@ class StateStore:
     def __init__(self, *, path: Path, debug: bool = False) -> None:
         self.path = path
         self.debug = debug
+        # Debug-only guardrail: disallow saves in contexts that must be read-only
+        # (e.g., tune). Thread-local so timers/OSD clear callbacks don't interfere.
+        self._tls = threading.local()
+
+    def _saves_disallowed_reason(self) -> str | None:
+        return getattr(self._tls, "disallow_saves_reason", None)
+
+    @contextmanager
+    def disallow_saves(self, *, reason: str) -> Any:
+        """Debug-only: block `save()` calls inside this context.
+
+        We use this to assert that tuning is strictly read-only.
+        """
+
+        prev = self._saves_disallowed_reason()
+        self._tls.disallow_saves_reason = str(reason)
+        try:
+            yield
+        finally:
+            # Restore previous value (supports nesting).
+            if prev is None:
+                try:
+                    delattr(self._tls, "disallow_saves_reason")
+                except Exception:
+                    pass
+            else:
+                self._tls.disallow_saves_reason = prev
 
     def load(self) -> PersistedState:
         try:
@@ -86,6 +115,14 @@ class StateStore:
             return PersistedState.empty()
 
     def save(self, state: PersistedState) -> None:
+        # Guardrail: tune must never persist state.
+        # In debug mode, log and skip the write.
+        reason = self._saves_disallowed_reason()
+        if reason is not None:
+            if self.debug:
+                print(f"[debug] ERROR state: save blocked (reason={reason})")
+            return
+
         self.path.parent.mkdir(parents=True, exist_ok=True)
         data = {
             "version": int(state.version),
@@ -95,4 +132,3 @@ class StateStore:
         tmp = self.path.with_suffix(self.path.suffix + ".tmp")
         tmp.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
         tmp.replace(self.path)
-

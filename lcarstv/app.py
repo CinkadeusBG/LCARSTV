@@ -134,48 +134,32 @@ def main() -> int:
                         )
                         schedule_trigger = active_chan.state.position_sec(now) >= float(expected_dur)
 
-                    trigger_kind: str | None = None
-
-                    # Prefer mpv-based triggers (EOF/IDLE/NEAR_END); fall back to schedule.
+                    # Prefer schedule as authoritative. mpv EOF/IDLE can happen early due to scrub.
                     mpv_reason: str | None = None
                     mpv_time_pos: float | None = None
                     mpv_dur: float | None = None
                     if mpv_trigger is not None:
                         mpv_reason, mpv_time_pos, mpv_dur = mpv_trigger
-                        # NEAR_END is informational; actual advancement must be driven by schedule
-                        # or definitive mpv transitions (EOF/IDLE).
-                        if mpv_reason in ("EOF", "IDLE"):
-                            trigger_kind = mpv_reason
-                    elif schedule_trigger:
-                        trigger_kind = "SCHEDULE"
 
-                    if trigger_kind is not None and current_media is not None:
+                    # Case A) Schedule says it ended -> do a real advance (persisted).
+                    if schedule_trigger and current_media is not None:
                         # Ensure it advances only once for the current media.
                         if last_auto_advanced_from != current_media:
                             old_file = current_media
-                            # Compute best-effort timing details for logging.
-                            tp_s = "?"
-                            dur_s = "?"
-                            if trigger_kind == "SCHEDULE":
+
+                            # Use mpv reason for labeling when available, else SCHEDULE.
+                            advance_reason = mpv_reason if mpv_reason in ("EOF", "IDLE") else "SCHEDULE"
+                            info = station.advance_active(now, reason=advance_reason)
+
+                            if settings.debug:
+                                tp_s = "?"
+                                dur_s = "?"
                                 chan = station.channels.get(station.active_call_sign)
                                 pos = chan.state.position_sec(now) if chan is not None else None
                                 tp_s = f"{pos:.2f}" if isinstance(pos, (int, float)) else "?"
                                 dur_s = f"{dur:.2f}" if isinstance(dur, (int, float)) else "?"
-                            else:
-                                tp_s = f"{mpv_time_pos:.2f}" if isinstance(mpv_time_pos, (int, float)) else "?"
-                                dur_s = f"{mpv_dur:.2f}" if isinstance(mpv_dur, (int, float)) else "?"
-
-                            # Advance only the currently active channel.
-                            # IMPORTANT: never sets started_at=now.
-                            if trigger_kind == "SCHEDULE":
-                                info = station.advance_active(now, reason="SCHEDULE")
-                            else:
-                                # EOF/IDLE: force at least one rollover.
-                                info = station.force_advance_active(now, reason=f"MPV_{trigger_kind}")
-
-                            if settings.debug:
                                 print(
-                                    f"[debug] auto-advance trigger={trigger_kind} time-pos={tp_s}s dur={dur_s}s {Path(old_file).name} -> {Path(info.current_file).name}"
+                                    f"[debug] auto-advance reason={advance_reason} time-pos={tp_s}s dur={dur_s}s {Path(old_file).name} -> {Path(info.current_file).name}"
                                 )
 
                             last_auto_advanced_from = old_file
@@ -184,6 +168,23 @@ def main() -> int:
                             # Suppress re-triggers while mpv transitions.
                             suppress_until_time = time.time() + 0.5
                             awaiting_mpv_path = _norm_path(info.current_file)
+
+                    # Case B) mpv says EOF/IDLE but schedule says it hasn't ended -> corrective re-load/seek.
+                    elif mpv_reason in ("EOF", "IDLE") and active_chan is not None:
+                        # IMPORTANT: do NOT advance or persist schedule state here.
+                        expected_file = active_chan.state.current_file
+                        expected_pos = active_chan.state.position_sec(now)
+
+                        if settings.debug:
+                            print(
+                                f"[debug] correct reason={mpv_reason} call_sign={station.active_call_sign} current_file={expected_file} position_sec={expected_pos:.2f}"
+                            )
+
+                        player.play(expected_file, expected_pos, call_sign=station.active_call_sign)
+
+                        # Suppress retriggers while mpv transitions back.
+                        suppress_until_time = time.time() + 0.5
+                        awaiting_mpv_path = _norm_path(expected_file)
 
             # low CPU polling loop; no threads.
             time.sleep(0.05)

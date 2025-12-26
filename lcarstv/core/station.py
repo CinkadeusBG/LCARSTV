@@ -59,9 +59,24 @@ class Station:
 
             if restored_file and restored_started:
                 current_file = restored_file
-                started_at = restored_started
+                # Defensive: a previous bug could persist a future started_at. Clamp to now
+                # so channels don't appear to restart at 0s forever until wall-clock catches up.
+                started_at = restored_started if restored_started <= now else now
                 if settings.debug:
-                    print(f"[debug] {ch.call_sign} restore: {Path(current_file).name} started_at={started_at.isoformat()}")
+                    if restored_started > now:
+                        print(
+                            f"[debug] {ch.call_sign} restore-fix: future started_at detected; clamped {restored_started.isoformat()} -> {started_at.isoformat()}"
+                        )
+                    else:
+                        print(f"[debug] {ch.call_sign} restore: {Path(current_file).name} started_at={started_at.isoformat()}")
+
+                # Persist the clamp if we had to fix it.
+                if restored_started > now:
+                    pch = selector.state.channels.get(ch.call_sign)
+                    if pch is not None:
+                        pch.current_file = current_file
+                        pch.started_at = started_at
+                        store.save(selector.state)
             else:
                 # Invalid/missing persisted state: choose a new file and start it in-progress.
                 current_path = selector.pick_next(
@@ -126,13 +141,19 @@ class Station:
         print(f"TUNED: {call_sign}")
 
         chan = self.channels[call_sign]
-        chan.sync_to_now(now, reason="TUNE_SYNC", debug=self.settings.debug)
-        pos = chan.state.position_sec(now)
 
-        if self.settings.debug:
-            print(
-                f"[debug] tune call_sign={call_sign} file={Path(chan.state.current_file).name} started_at={chan.state.started_at.isoformat()} pos={pos:.2f}s"
-            )
+        # Tuning must be strictly read-only: no state persistence.
+        # Rollover catch-up is allowed in-memory, but we block any StateStore.save().
+        with chan.store.disallow_saves(reason="TUNE"):
+            # If we are behind, apply schedule-based rollovers in-memory.
+            # Log reason as SCHEDULE to match the advance instrumentation contract.
+            chan.sync_to_now(now, reason="SCHEDULE", debug=self.settings.debug, persist=False)
+            pos = chan.state.position_sec(now)
+
+            if self.settings.debug:
+                print(
+                    f"[debug] tune call_sign={call_sign} current_file={chan.state.current_file} started_at={chan.state.started_at.isoformat()} position_sec={pos:.2f}"
+                )
         print(f"Airing: {Path(chan.state.current_file).name}")
         print(f"Started at: {chan.state.started_at.isoformat()}")
         print(f"Position: {pos:.2f}s")
@@ -157,7 +178,7 @@ class Station:
             raise KeyError(call_sign)
 
         chan = self.channels[call_sign]
-        chan.sync_to_now(now, reason=reason, debug=self.settings.debug)
+        chan.sync_to_now(now, reason=reason, debug=self.settings.debug, persist=True)
         pos = chan.state.position_sec(now)
         return TuneInfo(
             call_sign=call_sign,
@@ -182,12 +203,17 @@ class Station:
         if call_sign not in self.channels:
             raise KeyError(call_sign)
 
+        # NOTE:
+        # Historically this method forced a rollover even if the real schedule hadn't ended
+        # (by pushing `started_at` into the future). That breaks live-TV invariants and can
+        # cause revisits to restart at 0s.
+        #
+        # New rule: we only advance when the schedule says we're at/after end.
+        # Callers that observe early mpv EOF/IDLE (e.g. user scrub) should correct playback
+        # by re-loading/seeking to the scheduled file/position instead of forcing an advance.
+
         chan = self.channels[call_sign]
-        dur = chan.durations.get_duration_sec(
-            chan.state.current_file, default_duration_sec=float(self.settings.default_duration_sec)
-        )
-        forced_now = max(now, chan.state.started_at + timedelta(seconds=float(dur) + 0.001))
-        chan.sync_to_now(forced_now, reason=reason, debug=self.settings.debug)
+        chan.sync_to_now(now, reason=reason, debug=self.settings.debug, persist=True)
 
         pos = chan.state.position_sec(now)
         return TuneInfo(
