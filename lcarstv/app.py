@@ -110,10 +110,24 @@ def main() -> int:
 
                     # Only evaluate triggers for the currently active channel.
                     active_chan = station.channels.get(station.active_call_sign)
-                    active_expected = _norm_path(active_chan.state.current_file) if active_chan is not None else None
+                    if active_chan is None:
+                        continue
+                    expected_pb = active_chan.scheduled_playback(now)
+                    expected_file = str(expected_pb.file_path)
+                    expected_pos = float(expected_pb.file_offset_sec)
+
                     current_media_norm = _norm_path(current_media)
-                    if active_expected is None or current_media_norm is None or active_expected != current_media_norm:
-                        # mpv is still transitioning or showing static / previous channel; ignore triggers.
+                    expected_norm = _norm_path(expected_file)
+                    if current_media_norm is None or expected_norm is None:
+                        continue
+
+                    # Ignore triggers while mpv is on static/previous channel.
+                    # We consider playback "in-channel" if the currently loaded file is
+                    # any file in the *current block*.
+                    block = active_chan.get_current_block()
+                    block_files_norm = {_norm_path(str(p)) for p in block.files}
+                    in_block = current_media_norm in block_files_norm
+                    if not in_block:
                         continue
 
                     # If we are within the playback guard window (static + post-seek grace),
@@ -124,15 +138,14 @@ def main() -> int:
                     # EOF/IDLE/NEAR_END detection from mpv.
                     mpv_trigger = player.poll_end_of_episode(end_epsilon_sec=settings.end_epsilon_sec)
 
-                    # Schedule rollover (authoritative / deterministic) based on cached per-file duration.
+                    # Schedule rollover (authoritative / deterministic) based on block duration.
                     schedule_trigger = False
                     dur = player.current_duration_sec()  # still used for debug logging only
-                    if active_chan is not None:
-                        expected_dur = active_chan.durations.get_duration_sec(
-                            active_chan.state.current_file,
-                            default_duration_sec=float(settings.default_duration_sec),
-                        )
-                        schedule_trigger = active_chan.state.position_sec(now) >= float(expected_dur)
+                    elapsed = active_chan.state.elapsed_sec(now)
+                    schedule_trigger = elapsed >= float(block.total_duration_sec)
+
+                    # Within-block schedule file switch.
+                    scheduled_file_mismatch = current_media_norm != expected_norm
 
                     # Prefer schedule as authoritative. mpv EOF/IDLE can happen early due to scrub.
                     mpv_reason: str | None = None
@@ -155,7 +168,8 @@ def main() -> int:
                                 tp_s = "?"
                                 dur_s = "?"
                                 chan = station.channels.get(station.active_call_sign)
-                                pos = chan.state.position_sec(now) if chan is not None else None
+                                pb = chan.scheduled_playback(now) if chan is not None else None
+                                pos = pb.file_offset_sec if pb is not None else None
                                 tp_s = f"{pos:.2f}" if isinstance(pos, (int, float)) else "?"
                                 dur_s = f"{dur:.2f}" if isinstance(dur, (int, float)) else "?"
                                 print(
@@ -169,15 +183,28 @@ def main() -> int:
                             suppress_until_time = time.time() + 0.5
                             awaiting_mpv_path = _norm_path(info.current_file)
 
+                    # Case B) Schedule says we should be on a different file within the current block.
+                    # Switch files without advancing the block.
+                    elif scheduled_file_mismatch:
+                        if settings.debug:
+                            print(
+                                f"[debug] within-block switch reason=SCHEDULE call_sign={station.active_call_sign} block_id={active_chan.state.current_block_id} {Path(current_media).name} -> {Path(expected_file).name} offset={expected_pos:.2f}"
+                            )
+
+                        player.play(expected_file, expected_pos, call_sign=station.active_call_sign)
+
+                        # Suppress retriggers while mpv transitions.
+                        suppress_until_time = time.time() + 0.5
+                        awaiting_mpv_path = _norm_path(expected_file)
+
                     # Case B) mpv says EOF/IDLE but schedule says it hasn't ended -> corrective re-load/seek.
-                    elif mpv_reason in ("EOF", "IDLE") and active_chan is not None:
+                    elif mpv_reason in ("EOF", "IDLE"):
                         # IMPORTANT: do NOT advance or persist schedule state here.
-                        expected_file = active_chan.state.current_file
-                        expected_pos = active_chan.state.position_sec(now)
+                        # expected_file/pos computed above
 
                         if settings.debug:
                             print(
-                                f"[debug] correct reason={mpv_reason} call_sign={station.active_call_sign} current_file={expected_file} position_sec={expected_pos:.2f}"
+                                f"[debug] correct reason={mpv_reason} call_sign={station.active_call_sign} block_id={active_chan.state.current_block_id} current_file={expected_file} position_sec={expected_pos:.2f}"
                             )
 
                         player.play(expected_file, expected_pos, call_sign=station.active_call_sign)

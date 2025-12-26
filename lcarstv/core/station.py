@@ -7,6 +7,14 @@ from pathlib import Path
 import random
 
 from .config import ChannelsConfig, Settings
+from .blocks import (
+    Block,
+    build_channel_blocks,
+    compute_block_playback,
+    display_block_id,
+    implicit_block_id_for_file,
+    norm_abs_path,
+)
 from .channel import ChannelRuntime
 from .duration_cache import DurationCache
 from .models import ChannelState, TuneInfo
@@ -46,67 +54,147 @@ class Station:
             else:
                 files = scan.files
 
+            explicit_blocks = tuple((b.id, b.files) for b in (ch.blocks or ()))
+            blocks_by_id, eligible_block_ids = build_channel_blocks(
+                call_sign=ch.call_sign,
+                repo_root=repo_root,
+                media_dirs=ch.media_dirs,
+                scanned_files=files,
+                explicit_blocks=explicit_blocks,
+                durations=durations,
+                default_duration_sec=float(settings.default_duration_sec),
+            )
+
             cooldown = int(ch.cooldown) if ch.cooldown is not None else int(settings.default_cooldown)
 
-            # Ensure scheduler has a bag for this channel/library.
-            selector.ensure_initialized(ch.call_sign, files)
-
             # Restore persisted live state if valid.
-            persisted_ch = selector.state.channels.get(ch.call_sign) or PersistedChannel()
-            eligible = {str(p) for p in files}
-            restored_file = persisted_ch.current_file if persisted_ch.current_file in eligible else None
-            restored_started = persisted_ch.started_at
+            # NOTE: We must migrate file-based scheduler state (v1) *before* calling
+            # ensure_initialized(), otherwise ensure_initialized() would prune it.
+            persisted_ch = selector.state.channels.get(ch.call_sign)
+            if persisted_ch is None:
+                selector.state.channels[ch.call_sign] = PersistedChannel()
+                persisted_ch = selector.state.channels[ch.call_sign]
 
-            if restored_file and restored_started:
-                current_file = restored_file
-                # Defensive: a previous bug could persist a future started_at. Clamp to now
-                # so channels don't appear to restart at 0s forever until wall-clock catches up.
-                started_at = restored_started if restored_started <= now else now
-                if settings.debug:
-                    if restored_started > now:
-                        print(
-                            f"[debug] {ch.call_sign} restore-fix: future started_at detected; clamped {restored_started.isoformat()} -> {started_at.isoformat()}"
-                        )
-                    else:
-                        print(f"[debug] {ch.call_sign} restore: {Path(current_file).name} started_at={started_at.isoformat()}")
+            def clamp_started_at(s: datetime | None) -> datetime | None:
+                if s is None:
+                    return None
+                return s if s <= now else now
 
-                # Persist the clamp if we had to fix it.
-                if restored_started > now:
-                    pch = selector.state.channels.get(ch.call_sign)
-                    if pch is not None:
-                        pch.current_file = current_file
-                        pch.started_at = started_at
-                        store.save(selector.state)
-            else:
-                # Invalid/missing persisted state: choose a new file and start it in-progress.
-                current_path = selector.pick_next(
+            restored_started = clamp_started_at(persisted_ch.started_at)
+
+            # --- Migrate scheduler state (bag/recent/last_played) from v1 file paths to block ids ---
+            # We do this even if state.version already says 2, because an older file-based
+            # state file might have been saved with version bumped.
+            def map_item(x: str) -> str | None:
+                if not x:
+                    return None
+                # If already a known block id, keep.
+                if x in blocks_by_id:
+                    return x
+                # If looks like a file path, map to explicit-containing or implicit id.
+                key = norm_abs_path(x)
+                for bb in blocks_by_id.values():
+                    for f in bb.files:
+                        if norm_abs_path(f) == key:
+                            return bb.id
+                # Otherwise treat as implicit single-file id.
+                return implicit_block_id_for_file(x)
+
+            if selector.state.version < 2:
+                selector.state.version = 2
+
+            if persisted_ch.bag is not None:
+                mapped = [map_item(v) for v in persisted_ch.bag]
+                bag2 = [m for m in mapped if m is not None and m in blocks_by_id]
+                persisted_ch.bag = list(dict.fromkeys(bag2))
+            if persisted_ch.recent is not None:
+                mapped = [map_item(v) for v in persisted_ch.recent]
+                persisted_ch.recent = [m for m in mapped if m is not None and m in blocks_by_id]
+            if persisted_ch.last_played:
+                lp = map_item(persisted_ch.last_played)
+                persisted_ch.last_played = lp if lp in blocks_by_id else None
+
+            # Ensure scheduler has a bag for this channel/eligible blocks.
+            # Avoid writing yet; we batch writes below.
+            selector.ensure_initialized(ch.call_sign, eligible_block_ids, persist=True, save=False)
+
+            # --- Migration + restore ---
+            # Priority:
+            # 1) v2: current_block_id
+            # 2) v1: current_file -> map to block and adjust started_at to block start
+            current_block_id: str | None = None
+            started_at: datetime | None = restored_started
+
+            if persisted_ch.current_block_id and persisted_ch.current_block_id in blocks_by_id:
+                current_block_id = persisted_ch.current_block_id
+            elif persisted_ch.current_file and started_at is not None:
+                # Try to find which block contains this file.
+                file_key = norm_abs_path(persisted_ch.current_file)
+                found_block: Block | None = None
+                found_index: int | None = None
+                for b in blocks_by_id.values():
+                    for i, f in enumerate(b.files):
+                        if norm_abs_path(f) == file_key:
+                            found_block = b
+                            found_index = i
+                            break
+                    if found_block is not None:
+                        break
+
+                if found_block is not None and found_index is not None:
+                    current_block_id = found_block.id
+                    # Old started_at referred to file start; v2 started_at refers to block start.
+                    # So shift started_at backward by sum(durations before current file).
+                    shift = float(sum(found_block.durations_sec[:found_index]))
+                    started_at = started_at - timedelta(seconds=shift)
+
+            # If we still don't have a valid block, initialize.
+            if current_block_id is None or started_at is None:
+                current_block_id = selector.pick_next(
                     call_sign=ch.call_sign,
-                    files=files,
+                    items=eligible_block_ids,
                     cooldown=cooldown,
-                    current_file=None,
+                    current_item=None,
                 )
-                current_file = str(current_path)
+                block = blocks_by_id[current_block_id]
 
-                dur = max(1.0, float(settings.default_duration_sec))
+                dur = max(1.0, float(block.total_duration_sec))
                 offset = random.random() * dur
                 started_at = now - timedelta(seconds=offset)
 
                 if settings.debug:
+                    pb = compute_block_playback(block=block, started_at=started_at, now=now)
                     print(
-                        f"[debug] {ch.call_sign} init: {Path(current_file).name} started_at={started_at.isoformat()} offset={offset:.2f}s"
+                        f"[debug] {ch.call_sign} init: block={display_block_id(current_block_id)} started_at={started_at.isoformat()} offset={offset:.2f}s file={pb.file_path.name} file_offset={pb.file_offset_sec:.2f}s"
                     )
 
                 # Persist initial live state.
                 pch = selector.state.channels.get(ch.call_sign)
                 if pch is not None:
-                    pch.current_file = current_file
+                    pch.current_block_id = current_block_id
+                    pch.current_file = None
+                    pch.started_at = started_at
+                    store.save(selector.state)
+            else:
+                # Persist migration/clamp fixes when we can.
+                pch = selector.state.channels.get(ch.call_sign)
+                if pch is not None:
+                    pch.current_block_id = current_block_id
+                    pch.current_file = None
                     pch.started_at = started_at
                     store.save(selector.state)
 
-            state = ChannelState(call_sign=ch.call_sign, current_file=current_file, started_at=started_at)
+                if settings.debug:
+                    print(
+                        f"[debug] {ch.call_sign} restore: block={display_block_id(current_block_id)} started_at={started_at.isoformat()}"
+                    )
+
+            assert started_at is not None
+            state = ChannelState(call_sign=ch.call_sign, current_block_id=current_block_id, started_at=started_at)
             channels[ch.call_sign] = ChannelRuntime(
                 call_sign=ch.call_sign,
-                files=files,
+                blocks_by_id=blocks_by_id,
+                eligible_block_ids=eligible_block_ids,
                 settings=settings,
                 cooldown=cooldown,
                 selector=selector,
@@ -148,19 +236,22 @@ class Station:
             # If we are behind, apply schedule-based rollovers in-memory.
             # Log reason as SCHEDULE to match the advance instrumentation contract.
             chan.sync_to_now(now, reason="SCHEDULE", debug=self.settings.debug, persist=False)
-            pos = chan.state.position_sec(now)
+            pb = chan.scheduled_playback(now)
+            pos = float(pb.file_offset_sec)
 
             if self.settings.debug:
                 print(
-                    f"[debug] tune call_sign={call_sign} current_file={chan.state.current_file} started_at={chan.state.started_at.isoformat()} position_sec={pos:.2f}"
+                    f"[debug] tune call_sign={call_sign} block_id={chan.state.current_block_id} current_file={pb.file_path} started_at={chan.state.started_at.isoformat()} file_offset_sec={pos:.2f}"
                 )
-        print(f"Airing: {Path(chan.state.current_file).name}")
+        print(f"Block: {display_block_id(chan.state.current_block_id)}")
+        print(f"Airing: {pb.file_path.name}")
         print(f"Started at: {chan.state.started_at.isoformat()}")
         print(f"Position: {pos:.2f}s")
         print()
         return TuneInfo(
             call_sign=call_sign,
-            current_file=chan.state.current_file,
+            block_id=chan.state.current_block_id,
+            current_file=str(pb.file_path),
             started_at=chan.state.started_at,
             position_sec=pos,
         )
@@ -179,10 +270,12 @@ class Station:
 
         chan = self.channels[call_sign]
         chan.sync_to_now(now, reason=reason, debug=self.settings.debug, persist=True)
-        pos = chan.state.position_sec(now)
+        pb = chan.scheduled_playback(now)
+        pos = float(pb.file_offset_sec)
         return TuneInfo(
             call_sign=call_sign,
-            current_file=chan.state.current_file,
+            block_id=chan.state.current_block_id,
+            current_file=str(pb.file_path),
             started_at=chan.state.started_at,
             position_sec=pos,
         )
@@ -215,10 +308,12 @@ class Station:
         chan = self.channels[call_sign]
         chan.sync_to_now(now, reason=reason, debug=self.settings.debug, persist=True)
 
-        pos = chan.state.position_sec(now)
+        pb = chan.scheduled_playback(now)
+        pos = float(pb.file_offset_sec)
         return TuneInfo(
             call_sign=call_sign,
-            current_file=chan.state.current_file,
+            block_id=chan.state.current_block_id,
+            current_file=str(pb.file_path),
             started_at=chan.state.started_at,
             position_sec=pos,
         )

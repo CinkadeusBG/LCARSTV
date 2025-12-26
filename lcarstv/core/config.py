@@ -6,10 +6,17 @@ from pathlib import Path
 
 
 @dataclass(frozen=True)
+class BlockConfig:
+    id: str
+    files: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class ChannelConfig:
     call_sign: str
     media_dirs: tuple[Path, ...]
     cooldown: int | None
+    blocks: tuple[BlockConfig, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -42,7 +49,23 @@ def load_channels_config(path: Path) -> ChannelsConfig:
         media_dirs = tuple(Path(p) for p in ch.get("media_dirs", []))
         cooldown_raw = ch.get("cooldown")
         cooldown = int(cooldown_raw) if cooldown_raw is not None else None
-        chans.append(ChannelConfig(call_sign=call_sign, media_dirs=media_dirs, cooldown=cooldown))
+
+        blocks_cfg: list[BlockConfig] = []
+        for b in ch.get("blocks", []) or []:
+            if not isinstance(b, dict):
+                continue
+            bid = str(b.get("id", "")).strip()
+            files_raw = b.get("files", []) or []
+            files = tuple(str(x) for x in files_raw)
+            if not bid:
+                raise ValueError(f"{call_sign}: block requires non-empty id")
+            if not files:
+                raise ValueError(f"{call_sign}: block {bid!r} requires non-empty files")
+            blocks_cfg.append(BlockConfig(id=bid, files=files))
+
+        chans.append(
+            ChannelConfig(call_sign=call_sign, media_dirs=media_dirs, cooldown=cooldown, blocks=tuple(blocks_cfg))
+        )
     if not chans:
         raise ValueError("channels.json has no channels")
     return ChannelsConfig(channels=tuple(chans))

@@ -10,21 +10,24 @@ from pathlib import Path
 from .state_store import PersistedChannel, PersistedState, StateStore
 
 
-def _fingerprint_files(files: tuple[Path, ...]) -> str:
+def _fingerprint_items(items: tuple[str, ...]) -> str:
     # Stable fingerprint of eligible set to detect library changes.
-    joined = "\n".join(str(p).lower() for p in files)
+    joined = "\n".join(str(x).lower() for x in items)
     return hashlib.sha256(joined.encode("utf-8")).hexdigest()
 
 
-def _seed_for(call_sign: str, *, bag_epoch: int, files_fp: str) -> int:
-    raw = f"{call_sign}:{bag_epoch}:{files_fp}".encode("utf-8")
+def _seed_for(call_sign: str, *, bag_epoch: int, items_fp: str) -> int:
+    raw = f"{call_sign}:{bag_epoch}:{items_fp}".encode("utf-8")
     # 64-bit seed
     return int.from_bytes(hashlib.sha256(raw).digest()[:8], "big", signed=False)
 
 
 @dataclass
 class SmartRandomSelector:
-    """Shuffle-bag + cooldown, persisted per channel."""
+    """Shuffle-bag + cooldown, persisted per channel.
+
+    In v2, the scheduler operates on arbitrary *item IDs* (block IDs).
+    """
 
     store: StateStore
     state: PersistedState
@@ -81,11 +84,11 @@ class SmartRandomSelector:
         ch.bag_epoch = max(0, int(ch.bag_epoch))
         return ch
 
-    def _reshuffle(self, call_sign: str, ch: PersistedChannel, files: tuple[Path, ...], *, log: bool = True) -> None:
+    def _reshuffle(self, call_sign: str, ch: PersistedChannel, items: tuple[str, ...], *, log: bool = True) -> None:
         # Build bag from current eligible set.
-        bag = [str(p) for p in files]
-        files_fp = _fingerprint_files(files)
-        seed = _seed_for(call_sign, bag_epoch=ch.bag_epoch, files_fp=files_fp)
+        bag = [str(x) for x in items]
+        items_fp = _fingerprint_items(items)
+        seed = _seed_for(call_sign, bag_epoch=ch.bag_epoch, items_fp=items_fp)
         rng = random.Random(seed)
         rng.shuffle(bag)
         ch.bag = bag
@@ -99,7 +102,7 @@ class SmartRandomSelector:
     def ensure_initialized(
         self,
         call_sign: str,
-        files: tuple[Path, ...],
+        items: tuple[str, ...],
         *,
         persist: bool = True,
         save: bool = True,
@@ -112,7 +115,7 @@ class SmartRandomSelector:
                 batch multiple state changes into a single `StateStore.save()`.
         """
         ch = self._get_channel_ref(call_sign, persist=persist)
-        eligible = {str(p) for p in files}
+        eligible = {str(x) for x in items}
 
         # Prune recent/last_played that no longer exist.
         if ch.last_played and ch.last_played not in eligible:
@@ -124,7 +127,7 @@ class SmartRandomSelector:
         bag_set = set(ch.bag or [])
         if not ch.bag or bag_set != eligible:
             # Keep existing bag_epoch so reshuffles are stable across restarts.
-            self._reshuffle(call_sign, ch, files, log=bool(persist and save))
+            self._reshuffle(call_sign, ch, items, log=bool(persist and save))
             if persist and save:
                 self.store.save(self.state)
             return
@@ -139,28 +142,28 @@ class SmartRandomSelector:
         self,
         *,
         call_sign: str,
-        files: tuple[Path, ...],
+        items: tuple[str, ...],
         cooldown: int,
-        current_file: Path | None,
+        current_item: str | None,
         persist: bool = True,
         save: bool = True,
-    ) -> Path:
-        """Pick the next file to air.
+    ) -> str:
+        """Pick the next item to air.
 
         Hard rule: avoid immediate repeat.
         Soft rule: avoid last N (cooldown) via recent queue.
         """
 
-        if not files:
-            raise ValueError("files must be non-empty")
+        if not items:
+            raise ValueError("items must be non-empty")
 
         cs = call_sign.strip().upper()
-        self.ensure_initialized(cs, files, persist=persist, save=save)
+        self.ensure_initialized(cs, items, persist=persist, save=save)
 
         ch = self._get_channel_ref(cs, persist=persist)
 
         last_played = ch.last_played
-        immediate_block = str(current_file) if current_file is not None else last_played
+        immediate_block = str(current_item) if current_item is not None else last_played
         cooldown_n = max(0, int(cooldown))
         recent = list(ch.recent or [])
         # Ensure recent doesn't exceed cooldown
@@ -180,11 +183,11 @@ class SmartRandomSelector:
         for strict_pass in range(2):
             if strict_pass == 1:
                 # second pass: new ordering
-                self._reshuffle(cs, ch, files, log=bool(persist and save))
+                self._reshuffle(cs, ch, items, log=bool(persist and save))
 
             if ch.bag_index >= len(ch.bag or []):
                 # bag exhausted -> reshuffle
-                self._reshuffle(cs, ch, files, log=bool(persist and save))
+                self._reshuffle(cs, ch, items, log=bool(persist and save))
 
             # Walk forward through bag
             while ch.bag_index < len(ch.bag or []):
@@ -193,11 +196,11 @@ class SmartRandomSelector:
 
                 if is_immediate_repeat(cand):
                     if self.debug and persist and save:
-                        print(f"[debug] {cs} skip: immediate repeat: {Path(cand).name}")
+                        print(f"[debug] {cs} skip: immediate repeat: {cand}")
                     continue
                 if is_in_recent(cand):
                     if self.debug and persist and save:
-                        print(f"[debug] {cs} skip: in recent: {Path(cand).name}")
+                        print(f"[debug] {cs} skip: in recent: {cand}")
                     continue
 
                 selected = cand
@@ -213,7 +216,7 @@ class SmartRandomSelector:
 
             # Make sure bag exists.
             if not ch.bag:
-                self._reshuffle(cs, ch, files, log=bool(persist and save))
+                self._reshuffle(cs, ch, items, log=bool(persist and save))
 
             # Try a full pass through the bag.
             attempts = 0
@@ -225,7 +228,7 @@ class SmartRandomSelector:
                 attempts += 1
                 if is_immediate_repeat(cand):
                     if self.debug and persist and save:
-                        print(f"[debug] {cs} skip: immediate repeat (relaxed): {Path(cand).name}")
+                        print(f"[debug] {cs} skip: immediate repeat (relaxed): {cand}")
                     continue
                 selected = cand
                 break
@@ -250,7 +253,7 @@ class SmartRandomSelector:
 
         if self.debug and persist and save:
             print(
-                f"[debug] {cs} selected: {Path(selected).name} bag_index={ch.bag_index} recent_len={len(ch.recent or [])}"
+                f"[debug] {cs} selected: {selected} bag_index={ch.bag_index} recent_len={len(ch.recent or [])}"
             )
 
-        return Path(selected)
+        return str(selected)

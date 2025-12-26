@@ -1,54 +1,349 @@
 {
   "durations": {
+    "z:/media/kdsn/star trek ds9 s01e01e02 - emissary.avi": {
+      "duration_sec": 5449.532904,
+      "mtime_ns": 1701296583434462900,
+      "size": 733722628
+    },
+    "z:/media/kdsn/star trek ds9 s01e03 - past prologue.avi": {
+      "duration_sec": 2727.852853,
+      "mtime_ns": 1701296583166314800,
+      "size": 366892756
+    },
+    "z:/media/kdsn/star trek ds9 s01e04 - a man alone.avi": {
+      "duration_sec": 2727.477477,
+      "mtime_ns": 1701296586564206600,
+      "size": 367290512
+    },
+    "z:/media/kdsn/star trek ds9 s01e05 - babel.avi": {
+      "duration_sec": 2724.391058,
+      "mtime_ns": 1701296587369810900,
+      "size": 366742378
+    },
+    "z:/media/kdsn/star trek ds9 s01e06 - captive pursuit.avi": {
+      "duration_sec": 2727.268936,
+      "mtime_ns": 1701296587385814700,
+      "size": 366677772
+    },
+    "z:/media/kdsn/star trek ds9 s01e07 - q-less.avi": {
+      "duration_sec": 2729.646313,
+      "mtime_ns": 1701296570579080200,
+      "size": 366726366
+    },
+    "z:/media/kdsn/star trek ds9 s01e08 - dax.avi": {
+      "duration_sec": 2718.468468,
+      "mtime_ns": 1701296571556827100,
+      "size": 367869756
+    },
+    "z:/media/kdsn/star trek ds9 s01e09 - the passenger.avi": {
+      "duration_sec": 2728.812145,
+      "mtime_ns": 1701296580360580900,
+      "size": 367678378
+    },
+    "z:/media/kdsn/star trek ds9 s01e10 - move along home.avi": {
+      "duration_sec": 2718.635302,
+      "mtime_ns": 1701296586856366800,
+      "size": 366908678
+    },
     "z:/media/kdsn/star trek ds9 s01e11 - the nagus.avi": {
       "duration_sec": 2720.845846,
       "mtime_ns": 1701294002868218600,
       "size": 367490162
+    },
+    "z:/media/kdsn/star trek ds9 s01e12 - vortex.avi": {
+      "duration_sec": 2724.808141,
+      "mtime_ns": 1701295853322930000,
+      "size": 366899336
+    },
+    "z:/media/kdsn/star trek ds9 s01e13 - battle lines.avi": {
+      "duration_sec": 2730.063397,
+      "mtime_ns": 1701295853464521100,
+      "size": 367093352
+    },
+    "z:/media/kdsn/star trek ds9 s01e14 - the storyteller.avi": {
+      "duration_sec": 2730.438772,
+      "mtime_ns": 1701296363569208100,
+      "size": 367843594
+    },
+    "z:/media/kdsn/star trek ds9 s01e15 - progress.avi": {
+      "duration_sec": 2729.688021,
+      "mtime_ns": 1701294009405070900,
+      "size": 367958618
     },
     "z:/media/kdsn/star trek ds9 s01e16 - if wishes were horses.avi": {
       "duration_sec": 2730.980981,
       "mtime_ns": 1701296540351000800,
       "size": 367324466
     },
+    "z:/media/kdsn/star trek ds9 s01e17 - the forsaken.avi": {
+      "duration_sec": 2729.562896,
+      "mtime_ns": 1701296540656252800,
+      "size": 367734240
+    },
+    "z:/media/kdsn/star trek ds9 s01e18 - dramatis personae.avi": {
+      "duration_sec": 2726.851852,
+      "mtime_ns": 1701296465933601200,
+      "size": 366826908
+    },
+    "z:/media/kdsn/star trek ds9 s01e19 - duet.avi": {
+      "duration_sec": 2730.438772,
+      "mtime_ns": 1701296560091831700,
+      "size": 367695160
+    },
+    "z:/media/kdsn/star trek ds9 s01e20 - in the hands of the prophets.avi": {
+      "duration_sec": 2730.689022,
+      "mtime_ns": 1701296560224121000,
+      "size": 367648962
+    },
     "z:/media/kdsn/star trek ds9 s02e01 - the homecoming.avi": {
       "duration_sec": 2730.313647,
       "mtime_ns": 1701296584533670100,
       "size": 367423600
+    },
+    "z:/media/kdsn/star trek ds9 s02e02 - the circle.avi": {
+      "duration_sec": 2729.688021,
+      "mtime_ns": 1701296595690483500,
+      "size": 367619318
+    },
+    "z:/media/kdsn/star trek ds9 s02e03 - the siege.avi": {
+      "duration_sec": 2730.188522,
+      "mtime_ns": 1701296572248091800,
+      "size": 367513766
+    },
+    "z:/media/kdsn/star trek ds9 s02e04 - invasive procedures.avi": {
+      "duration_sec": 2734.317651,
+      "mtime_ns": 1701296572374548200,
+      "size": 367627046
+    },
+    "z:/media/kdsn/star trek ds9 s02e05 - cardassians.avi": {
+      "duration_sec": 2729.229229,
+      "mtime_ns": 1701295857342007600,
+      "size": 367535870
+    },
+    "z:/media/kdsn/star trek ds9 s02e06 - melora.avi": {
+      "duration_sec": 2728.43677,
+      "mtime_ns": 1701295857343008000,
+      "size": 367433070
+    },
+    "z:/media/kdsn/star trek ds9 s02e07 - rules of acquisition.avi": {
+      "duration_sec": 2728.853854,
+      "mtime_ns": 1701293243891074300,
+      "size": 367270240
+    },
+    "z:/media/kdsn/star trek ds9 s02e08 - necessary evil.avi": {
+      "duration_sec": 2728.853854,
+      "mtime_ns": 1701295668004856800,
+      "size": 367230332
+    },
+    "z:/media/kdsn/star trek ds9 s02e09 - second sight.avi": {
+      "duration_sec": 2730.855856,
+      "mtime_ns": 1701295675440106800,
+      "size": 367435206
     },
     "z:/media/kdsn/star trek ds9 s02e10 - sanctuary.avi": {
       "duration_sec": 2731.606607,
       "mtime_ns": 1701293260506301300,
       "size": 367225292
     },
+    "z:/media/kdsn/star trek ds9 s02e11 - rivals.avi": {
+      "duration_sec": 2732.482482,
+      "mtime_ns": 1701293224578329300,
+      "size": 367324888
+    },
+    "z:/media/kdsn/star trek ds9 s02e12 - the alternate.avi": {
+      "duration_sec": 2730.855856,
+      "mtime_ns": 1701296019979997000,
+      "size": 367437514
+    },
     "z:/media/kdsn/star trek ds9 s02e13 - armageddon game.avi": {
       "duration_sec": 2729.854855,
       "mtime_ns": 1701296020050429300,
       "size": 367432690
+    },
+    "z:/media/kdsn/star trek ds9 s02e14 - whispers.avi": {
+      "duration_sec": 2729.771438,
+      "mtime_ns": 1701293216079860500,
+      "size": 367433582
+    },
+    "z:/media/kdsn/star trek ds9 s02e15 - paradise.avi": {
+      "duration_sec": 2729.270938,
+      "mtime_ns": 1701295716533705300,
+      "size": 367426646
     },
     "z:/media/kdsn/star trek ds9 s02e16 - shadowplay.avi": {
       "duration_sec": 2730.939273,
       "mtime_ns": 1701295716624706700,
       "size": 367435386
     },
+    "z:/media/kdsn/star trek ds9 s02e17 - playing god.avi": {
+      "duration_sec": 2729.854855,
+      "mtime_ns": 1701296002973079500,
+      "size": 367430754
+    },
+    "z:/media/kdsn/star trek ds9 s02e18 - profit and loss.avi": {
+      "duration_sec": 2728.311645,
+      "mtime_ns": 1701296003239682300,
+      "size": 367427040
+    },
+    "z:/media/kdsn/star trek ds9 s02e19 - blood oath.avi": {
+      "duration_sec": 2729.854855,
+      "mtime_ns": 1701293226646658600,
+      "size": 367177772
+    },
+    "z:/media/kdsn/star trek ds9 s02e20 - the marquis (part 1).avi": {
+      "duration_sec": 2728.978979,
+      "mtime_ns": 1701293216758102000,
+      "size": 367435246
+    },
+    "z:/media/kdsn/star trek ds9 s02e21 - the marquis (part 2).avi": {
+      "duration_sec": 2731.856857,
+      "mtime_ns": 1701293210360420900,
+      "size": 367436208
+    },
+    "z:/media/kdsn/star trek ds9 s02e22 - the wire.avi": {
+      "duration_sec": 2731.815148,
+      "mtime_ns": 1701293225189561700,
+      "size": 367434070
+    },
+    "z:/media/kdsn/star trek ds9 s02e23 - crossover.avi": {
+      "duration_sec": 2729.97998,
+      "mtime_ns": 1701296573371481500,
+      "size": 367431544
+    },
+    "z:/media/kdsn/star trek ds9 s02e24 - the collaborator.avi": {
+      "duration_sec": 2730.146813,
+      "mtime_ns": 1701296573670531400,
+      "size": 367435498
+    },
+    "z:/media/kdsn/star trek ds9 s02e25 - tribunal.avi": {
+      "duration_sec": 2730.313647,
+      "mtime_ns": 1701293220903167300,
+      "size": 367434906
+    },
     "z:/media/kdsn/star trek ds9 s02e26 - the jem hadar.avi": {
       "duration_sec": 2729.854855,
       "mtime_ns": 1701296535862393700,
       "size": 367426902
+    },
+    "z:/media/kdsn/star trek ds9 s03e01 - the search (part 1).avi": {
+      "duration_sec": 2728.228228,
+      "mtime_ns": 1701296536039443000,
+      "size": 367626026
+    },
+    "z:/media/kdsn/star trek ds9 s03e02 - the search (part 2).avi": {
+      "duration_sec": 2725.183517,
+      "mtime_ns": 1701293217147395800,
+      "size": 367218784
+    },
+    "z:/media/kdsn/star trek ds9 s03e03 - the house of quark.avi": {
+      "duration_sec": 2729.354354,
+      "mtime_ns": 1701295192092325900,
+      "size": 367517518
+    },
+    "z:/media/kdsn/star trek ds9 s03e04 - equilibrium.avi": {
+      "duration_sec": 2726.601602,
+      "mtime_ns": 1701295246913048700,
+      "size": 367318490
+    },
+    "z:/media/kdsn/star trek ds9 s03e05 - second skin.avi": {
+      "duration_sec": 2729.521188,
+      "mtime_ns": 1701293220221068200,
+      "size": 367433228
+    },
+    "z:/media/kdsn/star trek ds9 s03e06 - the abandoned.avi": {
+      "duration_sec": 2729.813146,
+      "mtime_ns": 1701296476489811000,
+      "size": 367330072
+    },
+    "z:/media/kdsn/star trek ds9 s03e07 - civil defense.avi": {
+      "duration_sec": 2730.188522,
+      "mtime_ns": 1701296476583659400,
+      "size": 367433624
+    },
+    "z:/media/kdsn/star trek ds9 s03e08 - meridian.avi": {
+      "duration_sec": 2729.854855,
+      "mtime_ns": 1701296374548859100,
+      "size": 367486246
+    },
+    "z:/media/kdsn/star trek ds9 s03e09 - defiant.avi": {
+      "duration_sec": 2729.437771,
+      "mtime_ns": 1701293219040110000,
+      "size": 367225196
     },
     "z:/media/kdsn/star trek ds9 s03e10 - fascination.avi": {
       "duration_sec": 2728.061395,
       "mtime_ns": 1701293230075531800,
       "size": 367544628
     },
+    "z:/media/kdsn/star trek ds9 s03e11 - past tense (part 1).avi": {
+      "duration_sec": 2729.396063,
+      "mtime_ns": 1701296151298882600,
+      "size": 367436776
+    },
+    "z:/media/kdsn/star trek ds9 s03e12 - past tense (part 2).avi": {
+      "duration_sec": 2728.645312,
+      "mtime_ns": 1701296558756096000,
+      "size": 367332052
+    },
+    "z:/media/kdsn/star trek ds9 s03e13 - life support.avi": {
+      "duration_sec": 2729.771438,
+      "mtime_ns": 1701296524347985600,
+      "size": 367729888
+    },
     "z:/media/kdsn/star trek ds9 s03e14 - heart of stone.avi": {
       "duration_sec": 2729.688021,
       "mtime_ns": 1701296586270916900,
       "size": 367424596
     },
+    "z:/media/kdsn/star trek ds9 s03e15 - destiny.avi": {
+      "duration_sec": 2728.353353,
+      "mtime_ns": 1701296549020719800,
+      "size": 367527422
+    },
+    "z:/media/kdsn/star trek ds9 s03e16 - prophet motive.avi": {
+      "duration_sec": 2728.478478,
+      "mtime_ns": 1701296585917000900,
+      "size": 367430396
+    },
+    "z:/media/kdsn/star trek ds9 s03e17 - visionary.avi": {
+      "duration_sec": 2726.89356,
+      "mtime_ns": 1701296568703962200,
+      "size": 367220714
+    },
+    "z:/media/kdsn/star trek ds9 s03e18 - distant voices.avi": {
+      "duration_sec": 2729.854855,
+      "mtime_ns": 1701296583971156400,
+      "size": 367639118
+    },
+    "z:/media/kdsn/star trek ds9 s03e19 - through the looking glass.avi": {
+      "duration_sec": 2724.391058,
+      "mtime_ns": 1701296552008238800,
+      "size": 367431438
+    },
+    "z:/media/kdsn/star trek ds9 s03e20 - improbable cause.avi": {
+      "duration_sec": 2724.391058,
+      "mtime_ns": 1701296572936935300,
+      "size": 367218160
+    },
     "z:/media/kdsn/star trek ds9 s03e21 - the die is cast.avi": {
       "duration_sec": 2730.271939,
       "mtime_ns": 1701296533336930300,
       "size": 367125460
+    },
+    "z:/media/kdsn/star trek ds9 s03e22 - explorers.avi": {
+      "duration_sec": 2730.605606,
+      "mtime_ns": 1701296497526647000,
+      "size": 367431538
+    },
+    "z:/media/kdsn/star trek ds9 s03e23 - family business.avi": {
+      "duration_sec": 2728.853854,
+      "mtime_ns": 1701296586358562300,
+      "size": 367226228
+    },
+    "z:/media/kdsn/star trek ds9 s03e24 - shakaar.avi": {
+      "duration_sec": 2728.853854,
+      "mtime_ns": 1701296563765140000,
+      "size": 367423024
     },
     "z:/media/kdsn/star trek ds9 s03e25 - facets.avi": {
       "duration_sec": 2729.396063,
@@ -60,25 +355,175 @@
       "mtime_ns": 1701296585141827200,
       "size": 367429364
     },
+    "z:/media/kdsn/star trek ds9 s04e01e02 - the way of the warrior.avi": {
+      "duration_sec": 5587.837838,
+      "mtime_ns": 1701296583633783300,
+      "size": 734786344
+    },
+    "z:/media/kdsn/star trek ds9 s04e03 - the visitor.avi": {
+      "duration_sec": 2730.814147,
+      "mtime_ns": 1701296577611890100,
+      "size": 367410598
+    },
+    "z:/media/kdsn/star trek ds9 s04e04 - hippocratic oath.avi": {
+      "duration_sec": 2729.854855,
+      "mtime_ns": 1701296572517366200,
+      "size": 367219972
+    },
+    "z:/media/kdsn/star trek ds9 s04e05 - indiscretion.avi": {
+      "duration_sec": 2728.937271,
+      "mtime_ns": 1701296534603177000,
+      "size": 367411774
+    },
     "z:/media/kdsn/star trek ds9 s04e06 - rejoined.avi": {
       "duration_sec": 2727.602603,
       "mtime_ns": 1701296540293637000,
       "size": 367424078
+    },
+    "z:/media/kdsn/star trek ds9 s04e07 - starship down.avi": {
+      "duration_sec": 2728.645312,
+      "mtime_ns": 1701296546668885200,
+      "size": 367421048
+    },
+    "z:/media/kdsn/star trek ds9 s04e08 - little green men.avi": {
+      "duration_sec": 2727.185519,
+      "mtime_ns": 1701296566029845600,
+      "size": 367927752
+    },
+    "z:/media/kdsn/star trek ds9 s04e09 - the sword of kahless.avi": {
+      "duration_sec": 2728.853854,
+      "mtime_ns": 1701296585402604500,
+      "size": 367242674
+    },
+    "z:/media/kdsn/star trek ds9 s04e10 - our man bashir.avi": {
+      "duration_sec": 2728.353353,
+      "mtime_ns": 1701296580765544800,
+      "size": 368231522
+    },
+    "z:/media/kdsn/star trek ds9 s04e11 - homefront.avi": {
+      "duration_sec": 2729.688021,
+      "mtime_ns": 1701296580925501500,
+      "size": 368331340
+    },
+    "z:/media/kdsn/star trek ds9 s04e12 - paradise lost.avi": {
+      "duration_sec": 2731.147814,
+      "mtime_ns": 1701296563138032500,
+      "size": 368035084
+    },
+    "z:/media/kdsn/star trek ds9 s04e13 - crossfire.avi": {
+      "duration_sec": 2728.853854,
+      "mtime_ns": 1701296548709409900,
+      "size": 367219102
+    },
+    "z:/media/kdsn/star trek ds9 s04e14 - return to grace.avi": {
+      "duration_sec": 2728.812145,
+      "mtime_ns": 1701296553588644500,
+      "size": 367320620
+    },
+    "z:/media/kdsn/star trek ds9 s04e15 - sons of mogh.avi": {
+      "duration_sec": 2728.520187,
+      "mtime_ns": 1701296585028801900,
+      "size": 367220066
+    },
+    "z:/media/kdsn/star trek ds9 s04e16 - bar association.avi": {
+      "duration_sec": 2728.478478,
+      "mtime_ns": 1701296542082486300,
+      "size": 368133858
     },
     "z:/media/kdsn/star trek ds9 s04e17 - accession.avi": {
       "duration_sec": 2723.890557,
       "mtime_ns": 1701296585969816500,
       "size": 364080496
     },
+    "z:/media/kdsn/star trek ds9 s04e18 - rules of engagement.avi": {
+      "duration_sec": 2728.061395,
+      "mtime_ns": 1701296548635746200,
+      "size": 366229220
+    },
+    "z:/media/kdsn/star trek ds9 s04e19 - hard time.avi": {
+      "duration_sec": 2729.396063,
+      "mtime_ns": 1701296571323808800,
+      "size": 367629582
+    },
     "z:/media/kdsn/star trek ds9 s04e20 - shattered mirror.avi": {
       "duration_sec": 2728.43677,
       "mtime_ns": 1701296581532559800,
       "size": 367218752
     },
+    "z:/media/kdsn/star trek ds9 s04e21 - the muse.avi": {
+      "duration_sec": 2730.897564,
+      "mtime_ns": 1701296578050057500,
+      "size": 365273128
+    },
+    "z:/media/kdsn/star trek ds9 s04e22 - for the cause.avi": {
+      "duration_sec": 2729.854855,
+      "mtime_ns": 1701296581718152300,
+      "size": 367516498
+    },
+    "z:/media/kdsn/star trek ds9 s04e23 - to the death.avi": {
+      "duration_sec": 2699.866533,
+      "mtime_ns": 1701296585157156400,
+      "size": 367086732
+    },
+    "z:/media/kdsn/star trek ds9 s04e24 - the quickening.avi": {
+      "duration_sec": 2729.312646,
+      "mtime_ns": 1701296583577457500,
+      "size": 366258682
+    },
+    "z:/media/kdsn/star trek ds9 s04e25 - body parts.avi": {
+      "duration_sec": 2730.188522,
+      "mtime_ns": 1701296583842200200,
+      "size": 368128860
+    },
     "z:/media/kdsn/star trek ds9 s04e26 - broken link.avi": {
       "duration_sec": 2724.84985,
       "mtime_ns": 1701296527704345900,
       "size": 367932756
+    },
+    "z:/media/kdsn/star trek ds9 s05e01 - apocalypse rising.avi": {
+      "duration_sec": 2729.646313,
+      "mtime_ns": 1701296534666850800,
+      "size": 367030902
+    },
+    "z:/media/kdsn/star trek ds9 s05e02 - the ship.avi": {
+      "duration_sec": 2727.394061,
+      "mtime_ns": 1701296587380812800,
+      "size": 367392216
+    },
+    "z:/media/kdsn/star trek ds9 s05e03 - looking for par'mach in all the wrong places.avi": {
+      "duration_sec": 2729.72973,
+      "mtime_ns": 1701296577294791500,
+      "size": 363410160
+    },
+    "z:/media/kdsn/star trek ds9 s05e04 - nor the battle to the strong.avi": {
+      "duration_sec": 2731.064398,
+      "mtime_ns": 1701296586304924700,
+      "size": 362364942
+    },
+    "z:/media/kdsn/star trek ds9 s05e05 - the assignment.avi": {
+      "duration_sec": 2731.856857,
+      "mtime_ns": 1701296578333229500,
+      "size": 363430244
+    },
+    "z:/media/kdsn/star trek ds9 s05e06 - trials and tribble-ations.avi": {
+      "duration_sec": 2731.898565,
+      "mtime_ns": 1701296561284650300,
+      "size": 363567400
+    },
+    "z:/media/kdsn/star trek ds9 s05e07 - let he who is without sin.avi": {
+      "duration_sec": 2729.97998,
+      "mtime_ns": 1701296569931000800,
+      "size": 363516288
+    },
+    "z:/media/kdsn/star trek ds9 s05e08 - things past.avi": {
+      "duration_sec": 2730.855856,
+      "mtime_ns": 1701296585562781000,
+      "size": 367122692
+    },
+    "z:/media/kdsn/star trek ds9 s05e09 - the ascent.avi": {
+      "duration_sec": 2727.560894,
+      "mtime_ns": 1701296581325482500,
+      "size": 362251148
     },
     "z:/media/kdsn/star trek ds9 s05e10 - rapture.avi": {
       "duration_sec": 2727.894561,
@@ -90,6 +535,36 @@
       "mtime_ns": 1701296591174736900,
       "size": 361912690
     },
+    "z:/media/kdsn/star trek ds9 s05e12 - the begotten.avi": {
+      "duration_sec": 2676.84351,
+      "mtime_ns": 1701296575870626900,
+      "size": 362339414
+    },
+    "z:/media/kdsn/star trek ds9 s05e13 - for the uniform.avi": {
+      "duration_sec": 2730.397064,
+      "mtime_ns": 1701296576715573200,
+      "size": 364247922
+    },
+    "z:/media/kdsn/star trek ds9 s05e14 - in purgatorys shadow.avi": {
+      "duration_sec": 2728.895562,
+      "mtime_ns": 1701296585480209200,
+      "size": 364201326
+    },
+    "z:/media/kdsn/star trek ds9 s05e15 - by infernos light.avi": {
+      "duration_sec": 2728.311645,
+      "mtime_ns": 1701296534127755800,
+      "size": 364209242
+    },
+    "z:/media/kdsn/star trek ds9 s05e16 - doctor bashir i presume.avi": {
+      "duration_sec": 2728.895562,
+      "mtime_ns": 1701296559936724000,
+      "size": 363627592
+    },
+    "z:/media/kdsn/star trek ds9 s05e17 - a simple investigation.avi": {
+      "duration_sec": 2726.559893,
+      "mtime_ns": 1701296544662722500,
+      "size": 367014976
+    },
     "z:/media/kdsn/star trek ds9 s05e18 - business as usual.avi": {
       "duration_sec": 2727.894561,
       "mtime_ns": 1701296582486021800,
@@ -100,75 +575,315 @@
       "mtime_ns": 1701296556016612700,
       "size": 346403416
     },
+    "z:/media/kdsn/star trek ds9 s05e20 - ferengi love songs.avi": {
+      "duration_sec": 2728.895562,
+      "mtime_ns": 1701296586662084800,
+      "size": 363502352
+    },
+    "z:/media/kdsn/star trek ds9 s05e21 - soldiers of the empire.avi": {
+      "duration_sec": 2727.894561,
+      "mtime_ns": 1701296583788060900,
+      "size": 331397074
+    },
+    "z:/media/kdsn/star trek ds9 s05e22 - children of time.avi": {
+      "duration_sec": 2728.061395,
+      "mtime_ns": 1701296532544198700,
+      "size": 364467644
+    },
+    "z:/media/kdsn/star trek ds9 s05e23 - blaze of glory.avi": {
+      "duration_sec": 2728.895562,
+      "mtime_ns": 1701296571788900300,
+      "size": 363114868
+    },
+    "z:/media/kdsn/star trek ds9 s05e24 - empok nor.avi": {
+      "duration_sec": 2728.478478,
+      "mtime_ns": 1701296582718780500,
+      "size": 363530700
+    },
+    "z:/media/kdsn/star trek ds9 s05e25 - in the cards.avi": {
+      "duration_sec": 2727.227227,
+      "mtime_ns": 1701296585818771300,
+      "size": 362219114
+    },
+    "z:/media/kdsn/star trek ds9 s05e26 - call to arms.avi": {
+      "duration_sec": 2728.228228,
+      "mtime_ns": 1701296570130205400,
+      "size": 362495252
+    },
+    "z:/media/kdsn/star trek ds9 s06e01 - a time to stand.avi": {
+      "duration_sec": 2716.88355,
+      "mtime_ns": 1701287576031661900,
+      "size": 367098822
+    },
+    "z:/media/kdsn/star trek ds9 s06e02 - rocks and shoals.avi": {
+      "duration_sec": 2715.882549,
+      "mtime_ns": 1701288441659319000,
+      "size": 367083158
+    },
+    "z:/media/kdsn/star trek ds9 s06e03 - sons and daughters.avi": {
+      "duration_sec": 2717.884551,
+      "mtime_ns": 1701289668680331600,
+      "size": 367107498
+    },
+    "z:/media/kdsn/star trek ds9 s06e04 - behind the lines.avi": {
+      "duration_sec": 2715.882549,
+      "mtime_ns": 1701289672964647000,
+      "size": 367108310
+    },
     "z:/media/kdsn/star trek ds9 s06e05 - favor the bold.avi": {
       "duration_sec": 2716.88355,
       "mtime_ns": 1701289692748176100,
       "size": 367080512
+    },
+    "z:/media/kdsn/star trek ds9 s06e06 - sacrifice of angels.avi": {
+      "duration_sec": 2716.88355,
+      "mtime_ns": 1701289674909972400,
+      "size": 367083002
     },
     "z:/media/kdsn/star trek ds9 s06e07 - you are cordially invited.avi": {
       "duration_sec": 2716.88355,
       "mtime_ns": 1701289398859432500,
       "size": 367078692
     },
+    "z:/media/kdsn/star trek ds9 s06e08 - resurrection.avi": {
+      "duration_sec": 2717.217217,
+      "mtime_ns": 1701289376442402900,
+      "size": 367098378
+    },
     "z:/media/kdsn/star trek ds9 s06e09 - statistical probabilities.avi": {
       "duration_sec": 2716.88355,
       "mtime_ns": 1701289386447716900,
       "size": 367100520
+    },
+    "z:/media/kdsn/star trek ds9 s06e10 - the magnificent ferengi.avi": {
+      "duration_sec": 2717.884551,
+      "mtime_ns": 1701289407832516600,
+      "size": 367081812
+    },
+    "z:/media/kdsn/star trek ds9 s06e11 - waltz.avi": {
+      "duration_sec": 2715.924258,
+      "mtime_ns": 1701289403934152000,
+      "size": 367097800
     },
     "z:/media/kdsn/star trek ds9 s06e12 - who mourns for morn.avi": {
       "duration_sec": 2714.881548,
       "mtime_ns": 1701289380572776800,
       "size": 367101730
     },
+    "z:/media/kdsn/star trek ds9 s06e13 - far beyond the stars.avi": {
+      "duration_sec": 2713.380047,
+      "mtime_ns": 1701289303028617200,
+      "size": 367095798
+    },
     "z:/media/kdsn/star trek ds9 s06e14 - one little ship.avi": {
       "duration_sec": 2717.884551,
       "mtime_ns": 1701289661378903300,
       "size": 367065598
+    },
+    "z:/media/kdsn/star trek ds9 s06e15 - honor among thieves.avi": {
+      "duration_sec": 2714.506173,
+      "mtime_ns": 1701289621103374500,
+      "size": 367098922
+    },
+    "z:/media/kdsn/star trek ds9 s06e16 - change of heart.avi": {
+      "duration_sec": 2715.757424,
+      "mtime_ns": 1701289357169005000,
+      "size": 367097154
+    },
+    "z:/media/kdsn/star trek ds9 s06e17 - wrongs darker than death or night.avi": {
+      "duration_sec": 2717.801134,
+      "mtime_ns": 1701289395825957100,
+      "size": 367067950
+    },
+    "z:/media/kdsn/star trek ds9 s06e18 - inquisition.avi": {
+      "duration_sec": 2717.92626,
+      "mtime_ns": 1701289220933662300,
+      "size": 367087506
+    },
+    "z:/media/kdsn/star trek ds9 s06e19 - in the pale moonlight.avi": {
+      "duration_sec": 2715.924258,
+      "mtime_ns": 1701289397171249100,
+      "size": 367096898
+    },
+    "z:/media/kdsn/star trek ds9 s06e20 - his way.avi": {
+      "duration_sec": 2715.382049,
+      "mtime_ns": 1701289391632427400,
+      "size": 367092510
+    },
+    "z:/media/kdsn/star trek ds9 s06e21 - the reckoning.avi": {
+      "duration_sec": 2718.885552,
+      "mtime_ns": 1701289370525269700,
+      "size": 367096036
+    },
+    "z:/media/kdsn/star trek ds9 s06e22 - valiant.avi": {
+      "duration_sec": 2718.718719,
+      "mtime_ns": 1701289679679665300,
+      "size": 367081860
     },
     "z:/media/kdsn/star trek ds9 s06e23 - profit and lace.avi": {
       "duration_sec": 2715.298632,
       "mtime_ns": 1701289388677047700,
       "size": 367095106
     },
+    "z:/media/kdsn/star trek ds9 s06e24 - times orphan.avi": {
+      "duration_sec": 2715.382049,
+      "mtime_ns": 1701289364334849600,
+      "size": 367091730
+    },
+    "z:/media/kdsn/star trek ds9 s06e25 - the sound of her voice.avi": {
+      "duration_sec": 2715.882549,
+      "mtime_ns": 1701289432246069300,
+      "size": 367088148
+    },
     "z:/media/kdsn/star trek ds9 s06e26 - tears of the prophets.avi": {
       "duration_sec": 2715.882549,
       "mtime_ns": 1701289679288994700,
       "size": 367096918
+    },
+    "z:/media/kdsn/star trek ds9 s07e01 - image in the sand.avi": {
+      "duration_sec": 2706.206206,
+      "mtime_ns": 1701285196004037700,
+      "size": 362267548
+    },
+    "z:/media/kdsn/star trek ds9 s07e02 - shadows and symbols.avi": {
+      "duration_sec": 2708.625292,
+      "mtime_ns": 1701285202135094100,
+      "size": 362393704
+    },
+    "z:/media/kdsn/star trek ds9 s07e03 - afterimage.avi": {
+      "duration_sec": 2705.955956,
+      "mtime_ns": 1701285219507060700,
+      "size": 353132076
+    },
+    "z:/media/kdsn/star trek ds9 s07e04 - take me out to the holosuite.avi": {
+      "duration_sec": 2705.580581,
+      "mtime_ns": 1701285206479125300,
+      "size": 364787194
+    },
+    "z:/media/kdsn/star trek ds9 s07e05 - chrysalis.avi": {
+      "duration_sec": 2704.871538,
+      "mtime_ns": 1701285204210632700,
+      "size": 362238906
+    },
+    "z:/media/kdsn/star trek ds9 s07e06 - treachery, faith and the great river.avi": {
+      "duration_sec": 2710.877544,
+      "mtime_ns": 1701285203666444900,
+      "size": 362332008
     },
     "z:/media/kdsn/star trek ds9 s07e07 - once more unto the breach.avi": {
       "duration_sec": 2709.125792,
       "mtime_ns": 1701285186480112600,
       "size": 362207810
     },
+    "z:/media/kdsn/star trek ds9 s07e08 - the siege of ar-558.avi": {
+      "duration_sec": 2707.665999,
+      "mtime_ns": 1701285184718183500,
+      "size": 362218838
+    },
+    "z:/media/kdsn/star trek ds9 s07e09 - covenant.avi": {
+      "duration_sec": 2707.040374,
+      "mtime_ns": 1701285186914481700,
+      "size": 363162090
+    },
+    "z:/media/kdsn/star trek ds9 s07e10 - its only a paper moon.avi": {
+      "duration_sec": 2708.041375,
+      "mtime_ns": 1701285243903193800,
+      "size": 362880052
+    },
+    "z:/media/kdsn/star trek ds9 s07e11 - prodigal daughter.avi": {
+      "duration_sec": 2704.82983,
+      "mtime_ns": 1701285174468670700,
+      "size": 347721208
+    },
+    "z:/media/kdsn/star trek ds9 s07e12 - the emperiors new cloak.avi": {
+      "duration_sec": 2710.168502,
+      "mtime_ns": 1701285210413709100,
+      "size": 359640302
+    },
+    "z:/media/kdsn/star trek ds9 s07e13 - field of fire.avi": {
+      "duration_sec": 2708.875542,
+      "mtime_ns": 1701285205808064600,
+      "size": 362336940
+    },
     "z:/media/kdsn/star trek ds9 s07e14 - chimera.avi": {
       "duration_sec": 2706.039373,
       "mtime_ns": 1701285208608113100,
       "size": 357702106
+    },
+    "z:/media/kdsn/star trek ds9 s07e15 - badda bing badda bang.avi": {
+      "duration_sec": 2706.87354,
+      "mtime_ns": 1701285199729021300,
+      "size": 362750718
+    },
+    "z:/media/kdsn/star trek ds9 s07e16 - inter arma enim silent leges.avi": {
+      "duration_sec": 2706.87354,
+      "mtime_ns": 1701285182657218000,
+      "size": 363002374
     },
     "z:/media/kdsn/star trek ds9 s07e17 - penumbra.avi": {
       "duration_sec": 2705.872539,
       "mtime_ns": 1701285208223815900,
       "size": 362347708
     },
+    "z:/media/kdsn/star trek ds9 s07e18 - til death do us part.avi": {
+      "duration_sec": 2705.205205,
+      "mtime_ns": 1701285203098603300,
+      "size": 362241854
+    },
+    "z:/media/kdsn/star trek ds9 s07e19 - strange bedfellows.avi": {
+      "duration_sec": 2703.870537,
+      "mtime_ns": 1701285224734970800,
+      "size": 362315196
+    },
+    "z:/media/kdsn/star trek ds9 s07e20 - the changing face of evil.avi": {
+      "duration_sec": 2711.211211,
+      "mtime_ns": 1701285206637043300,
+      "size": 362358128
+    },
     "z:/media/kdsn/star trek ds9 s07e21 - when it rains.avi": {
       "duration_sec": 2703.870537,
       "mtime_ns": 1701285191920011600,
       "size": 359862042
+    },
+    "z:/media/kdsn/star trek ds9 s07e22 - tacking into the wind.avi": {
+      "duration_sec": 2708.124791,
+      "mtime_ns": 1701285190953976100,
+      "size": 362399582
+    },
+    "z:/media/kdsn/star trek ds9 s07e23 - extreme measures.avi": {
+      "duration_sec": 2707.207207,
+      "mtime_ns": 1701285202897562700,
+      "size": 362373118
     },
     "z:/media/kdsn/star trek ds9 s07e24 - the dogs of war.avi": {
       "duration_sec": 2707.874541,
       "mtime_ns": 1701285201374514000,
       "size": 362389788
     },
+    "z:/media/kdsn/star trek ds9 s07e25e26 - what you leave behind.avi": {
+      "duration_sec": 5516.349683,
+      "mtime_ns": 1701285205994387800,
+      "size": 736584430
+    },
     "z:/media/kvoy/star.trek.voyager.s01e01.caretaker.mkv": {
       "duration_sec": 5516.586,
       "mtime_ns": 1701292757070387800,
       "size": 478263769
     },
+    "z:/media/kvoy/star.trek.voyager.s01e02.parallax.mkv": {
+      "duration_sec": 2755.199,
+      "mtime_ns": 1701292760266313400,
+      "size": 188983952
+    },
     "z:/media/kvoy/star.trek.voyager.s01e03.time.and.again.mkv": {
       "duration_sec": 2753.599,
       "mtime_ns": 1701292039914726500,
       "size": 226818306
+    },
+    "z:/media/kvoy/star.trek.voyager.s01e04.phage.mkv": {
+      "duration_sec": 2753.535,
+      "mtime_ns": 1701291405929317100,
+      "size": 204223575
     },
     "z:/media/kvoy/star.trek.voyager.s01e05.the.cloud.mkv": {
       "duration_sec": 2752.554,
@@ -185,115 +900,665 @@
       "mtime_ns": 1701292550327087800,
       "size": 204658304
     },
+    "z:/media/kvoy/star.trek.voyager.s01e08.emanations.mkv": {
+      "duration_sec": 2745.087,
+      "mtime_ns": 1701292583644606000,
+      "size": 195499147
+    },
+    "z:/media/kvoy/star.trek.voyager.s01e09.prime.factors.mkv": {
+      "duration_sec": 2746.687,
+      "mtime_ns": 1701292590319278700,
+      "size": 189410293
+    },
+    "z:/media/kvoy/star.trek.voyager.s01e10.state.of.flux.mkv": {
+      "duration_sec": 2751.722,
+      "mtime_ns": 1701292249001085100,
+      "size": 191979531
+    },
+    "z:/media/kvoy/star.trek.voyager.s01e11.heroes.and.demons.mkv": {
+      "duration_sec": 2750.655,
+      "mtime_ns": 1701292201052365100,
+      "size": 232406634
+    },
+    "z:/media/kvoy/star.trek.voyager.s01e12.cathexis.mkv": {
+      "duration_sec": 2750.143,
+      "mtime_ns": 1701292569969823000,
+      "size": 196782016
+    },
+    "z:/media/kvoy/star.trek.voyager.s01e13.faces.mkv": {
+      "duration_sec": 2748.906,
+      "mtime_ns": 1701292158195225700,
+      "size": 196463699
+    },
+    "z:/media/kvoy/star.trek.voyager.s01e14.jetrel.mkv": {
+      "duration_sec": 2746.41,
+      "mtime_ns": 1701292210937777700,
+      "size": 203929583
+    },
+    "z:/media/kvoy/star.trek.voyager.s01e15.learning.curve.mkv": {
+      "duration_sec": 2750.442,
+      "mtime_ns": 1701292609119280600,
+      "size": 202549158
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e01.the.37's.mkv": {
+      "duration_sec": 2748.714,
+      "mtime_ns": 1701290800212435200,
+      "size": 205567766
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e02.initiations.mkv": {
+      "duration_sec": 2752.447,
+      "mtime_ns": 1701291811876422900,
+      "size": 228042431
+    },
     "z:/media/kvoy/star.trek.voyager.s02e03.projections.mkv": {
       "duration_sec": 2748.095,
       "mtime_ns": 1701291759951592500,
       "size": 184684484
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e04.elogium.mkv": {
+      "duration_sec": 2749.29,
+      "mtime_ns": 1701292790469911000,
+      "size": 196467564
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e05.non.sequitur.mkv": {
+      "duration_sec": 2756.031,
+      "mtime_ns": 1701292678059972700,
+      "size": 228553773
     },
     "z:/media/kvoy/star.trek.voyager.s02e06.twisted.mkv": {
       "duration_sec": 2747.05,
       "mtime_ns": 1701292068706718000,
       "size": 184620063
     },
+    "z:/media/kvoy/star.trek.voyager.s02e07.parturition.mkv": {
+      "duration_sec": 2753.642,
+      "mtime_ns": 1701292070006925300,
+      "size": 217947877
+    },
     "z:/media/kvoy/star.trek.voyager.s02e08.persistence.of.vision.mkv": {
       "duration_sec": 2754.538,
       "mtime_ns": 1701292052827414200,
       "size": 204563343
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e09.tattoo.mkv": {
+      "duration_sec": 2753.023,
+      "mtime_ns": 1701292577584985400,
+      "size": 275893743
     },
     "z:/media/kvoy/star.trek.voyager.s02e10.cold.fire.mkv": {
       "duration_sec": 2755.05,
       "mtime_ns": 1701292551881629300,
       "size": 213616218
     },
+    "z:/media/kvoy/star.trek.voyager.s02e11.maneuvers.mkv": {
+      "duration_sec": 2754.879,
+      "mtime_ns": 1701292760689882700,
+      "size": 225748306
+    },
     "z:/media/kvoy/star.trek.voyager.s02e12.resistance.mkv": {
       "duration_sec": 2753.194,
       "mtime_ns": 1701292771140004500,
       "size": 211205154
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e13.prototype.mkv": {
+      "duration_sec": 2755.711,
+      "mtime_ns": 1701292662205155300,
+      "size": 246012223
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e14.alliances.mkv": {
+      "duration_sec": 2754.687,
+      "mtime_ns": 1701292636718570000,
+      "size": 206128985
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e15.threshold.mkv": {
+      "duration_sec": 2755.519,
+      "mtime_ns": 1701292674838393300,
+      "size": 206594090
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e16.meld.mkv": {
+      "duration_sec": 2753.706,
+      "mtime_ns": 1701292668641431700,
+      "size": 185014956
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e17.dreadnought.mkv": {
+      "duration_sec": 2750.527,
+      "mtime_ns": 1701292672100332000,
+      "size": 193162719
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e18.death.wish.mkv": {
+      "duration_sec": 2755.967,
+      "mtime_ns": 1701292666710332100,
+      "size": 178143178
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e19.lifesigns.mkv": {
+      "duration_sec": 2752.447,
+      "mtime_ns": 1701292617055206400,
+      "size": 170497735
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e20.investigations.mkv": {
+      "duration_sec": 2757.93,
+      "mtime_ns": 1701290392920064700,
+      "size": 211015470
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e21.deadlock.mkv": {
+      "duration_sec": 2759.551,
+      "mtime_ns": 1701292642873356200,
+      "size": 226959230
     },
     "z:/media/kvoy/star.trek.voyager.s02e22.innocence.mkv": {
       "duration_sec": 2755.05,
       "mtime_ns": 1701292682246328900,
       "size": 190539921
     },
+    "z:/media/kvoy/star.trek.voyager.s02e23.the.thaw.mkv": {
+      "duration_sec": 2758.058,
+      "mtime_ns": 1701292681129018000,
+      "size": 221652774
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e24.tuvix.mkv": {
+      "duration_sec": 2754.047,
+      "mtime_ns": 1701292609283383100,
+      "size": 191046574
+    },
     "z:/media/kvoy/star.trek.voyager.s02e25.resolutions.mkv": {
       "duration_sec": 2755.05,
       "mtime_ns": 1701292662766774700,
       "size": 214124967
+    },
+    "z:/media/kvoy/star.trek.voyager.s02e26.basics.part.i.mkv": {
+      "duration_sec": 2757.226,
+      "mtime_ns": 1701292664362982300,
+      "size": 203256556
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e01.basics.part.ii.mkv": {
+      "duration_sec": 2758.015,
+      "mtime_ns": 1701292600771549900,
+      "size": 265829114
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e02.flashback.mkv": {
+      "duration_sec": 2754.047,
+      "mtime_ns": 1701292609772544700,
+      "size": 210229321
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e03.the.chute.mkv": {
+      "duration_sec": 2756.415,
+      "mtime_ns": 1701292659685908700,
+      "size": 217621088
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e04.the.swarm.mkv": {
+      "duration_sec": 2753.834,
+      "mtime_ns": 1701292660906873600,
+      "size": 196110810
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e05.false.profits.mkv": {
+      "duration_sec": 2754.239,
+      "mtime_ns": 1701292675737409000,
+      "size": 291033539
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e06.remember.mkv": {
+      "duration_sec": 2753.386,
+      "mtime_ns": 1701292670348408700,
+      "size": 188941864
     },
     "z:/media/kvoy/star.trek.voyager.s03e07.sacred.ground.mkv": {
       "duration_sec": 2755.37,
       "mtime_ns": 1701292611568433100,
       "size": 179650757
     },
+    "z:/media/kvoy/star.trek.voyager.s03e08.future's.end.part.i.mkv": {
+      "duration_sec": 2753.727,
+      "mtime_ns": 1701292658755979500,
+      "size": 258058007
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e09.future's.end.part.ii.mkv": {
+      "duration_sec": 2757.034,
+      "mtime_ns": 1701292665852211900,
+      "size": 264065081
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e10.warlord.mkv": {
+      "duration_sec": 2756.031,
+      "mtime_ns": 1701292669189992900,
+      "size": 251849008
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e11.the.q.and.the.grey.mkv": {
+      "duration_sec": 2753.023,
+      "mtime_ns": 1701292678776134200,
+      "size": 246568414
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e12.macrocosm.mkv": {
+      "duration_sec": 2754.218,
+      "mtime_ns": 1701292682495077900,
+      "size": 215859911
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e13.fair.trade.mkv": {
+      "duration_sec": 2752.959,
+      "mtime_ns": 1701292661678036000,
+      "size": 223090887
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e14.alter.ego.mkv": {
+      "duration_sec": 2755.882,
+      "mtime_ns": 1701292676904803100,
+      "size": 232625630
+    },
     "z:/media/kvoy/star.trek.voyager.s03e15.coda.mkv": {
       "duration_sec": 2755.007,
       "mtime_ns": 1701292684497970900,
       "size": 190493003
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e16.blood.fever.mkv": {
+      "duration_sec": 2755.882,
+      "mtime_ns": 1701292701590743900,
+      "size": 213530156
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e17.unity.mkv": {
+      "duration_sec": 2756.607,
+      "mtime_ns": 1701292670991239300,
+      "size": 214794105
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e18.darkling.mkv": {
+      "duration_sec": 2756.671,
+      "mtime_ns": 1701292671645229700,
+      "size": 216589897
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e19.rise.mkv": {
+      "duration_sec": 2758.058,
+      "mtime_ns": 1701292677070840900,
+      "size": 209131759
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e20.favorite.son.mkv": {
+      "duration_sec": 2758.058,
+      "mtime_ns": 1701292662309992200,
+      "size": 216805502
     },
     "z:/media/kvoy/star.trek.voyager.s03e21.before.and.after.mkv": {
       "duration_sec": 2756.671,
       "mtime_ns": 1701292796045415800,
       "size": 237563546
     },
+    "z:/media/kvoy/star.trek.voyager.s03e22.real.life.mkv": {
+      "duration_sec": 2759.487,
+      "mtime_ns": 1701292562649677300,
+      "size": 221617294
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e23.distant.origin.mkv": {
+      "duration_sec": 2759.039,
+      "mtime_ns": 1701292634197191100,
+      "size": 211446856
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e24.displaced.mkv": {
+      "duration_sec": 2759.039,
+      "mtime_ns": 1701292634538606400,
+      "size": 232748881
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e25.worst.case.scenario.mkv": {
+      "duration_sec": 2756.97,
+      "mtime_ns": 1701292660733216400,
+      "size": 196785868
+    },
+    "z:/media/kvoy/star.trek.voyager.s03e26.scorpion.part.i.mkv": {
+      "duration_sec": 2756.415,
+      "mtime_ns": 1701292705487893600,
+      "size": 192651533
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e01.scorpion.part.ii.mkv": {
+      "duration_sec": 2758.058,
+      "mtime_ns": 1701292785626622600,
+      "size": 200215678
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e02.the.gift.mkv": {
+      "duration_sec": 2758.378,
+      "mtime_ns": 1701292552883635300,
+      "size": 184348340
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e03.day.of.honor.mkv": {
+      "duration_sec": 2760.383,
+      "mtime_ns": 1701292641211897600,
+      "size": 207138024
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e04.nemesis.mkv": {
+      "duration_sec": 2758.058,
+      "mtime_ns": 1701292669459907300,
+      "size": 267628385
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e05.revulsion.mkv": {
+      "duration_sec": 2759.103,
+      "mtime_ns": 1701292683557968000,
+      "size": 201537175
+    },
     "z:/media/kvoy/star.trek.voyager.s04e06.the.raven.mkv": {
       "duration_sec": 2757.567,
       "mtime_ns": 1701292675272158700,
       "size": 202428398
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e07.scientific.method.mkv": {
+      "duration_sec": 2758.783,
+      "mtime_ns": 1701292699695600800,
+      "size": 220321403
     },
     "z:/media/kvoy/star.trek.voyager.s04e08.year.of.hell.part.i.mkv": {
       "duration_sec": 2760.042,
       "mtime_ns": 1701292776818541600,
       "size": 208088218
     },
+    "z:/media/kvoy/star.trek.voyager.s04e09.year.of.hell.part.ii.mkv": {
+      "duration_sec": 2765.311,
+      "mtime_ns": 1701292786641857700,
+      "size": 204814582
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e10.random.thoughts.mkv": {
+      "duration_sec": 2758.719,
+      "mtime_ns": 1701292784266019900,
+      "size": 205202325
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e11.concerning.flight.mkv": {
+      "duration_sec": 2761.983,
+      "mtime_ns": 1701292625149296100,
+      "size": 249056254
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e12.mortal.coil.mkv": {
+      "duration_sec": 2761.066,
+      "mtime_ns": 1701292612277620200,
+      "size": 220323208
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e13.waking.moments.mkv": {
+      "duration_sec": 2754.154,
+      "mtime_ns": 1701292751905848100,
+      "size": 196012401
+    },
     "z:/media/kvoy/star.trek.voyager.s04e14.message.in.a.bottle.mkv": {
       "duration_sec": 2760.938,
       "mtime_ns": 1701292782618897000,
       "size": 208267003
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e15.hunters.mkv": {
+      "duration_sec": 2759.039,
+      "mtime_ns": 1701292645420279200,
+      "size": 208414407
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e16.prey.mkv": {
+      "duration_sec": 2759.146,
+      "mtime_ns": 1701292677069840300,
+      "size": 218847296
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e17.retrospect.mkv": {
+      "duration_sec": 2756.138,
+      "mtime_ns": 1701292638892681900,
+      "size": 180922651
     },
     "z:/media/kvoy/star.trek.voyager.s04e18.the.killing.game.part.i.mkv": {
       "duration_sec": 2760.298,
       "mtime_ns": 1701292682905083800,
       "size": 217290219
     },
+    "z:/media/kvoy/star.trek.voyager.s04e19.the.killing.game.part.ii.mkv": {
+      "duration_sec": 2754.538,
+      "mtime_ns": 1701292657875084600,
+      "size": 210817470
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e20.vis.\u00e0.vis.mkv": {
+      "duration_sec": 2759.551,
+      "mtime_ns": 1701292655584688800,
+      "size": 191161424
+    },
     "z:/media/kvoy/star.trek.voyager.s04e21.the.omega.directive.mkv": {
       "duration_sec": 2759.423,
       "mtime_ns": 1701292637651586700,
       "size": 178355609
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e22.unforgettable.mkv": {
+      "duration_sec": 2756.202,
+      "mtime_ns": 1701292666709331700,
+      "size": 170099924
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e23.living.witness.mkv": {
+      "duration_sec": 2757.098,
+      "mtime_ns": 1701292670738152800,
+      "size": 190699623
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e24.demon.mkv": {
+      "duration_sec": 2759.551,
+      "mtime_ns": 1701292651537477700,
+      "size": 189222658
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e25.one.mkv": {
+      "duration_sec": 2756.202,
+      "mtime_ns": 1701292662596735300,
+      "size": 190153844
+    },
+    "z:/media/kvoy/star.trek.voyager.s04e26.hope.and.fear.mkv": {
+      "duration_sec": 2759.551,
+      "mtime_ns": 1701292718046838200,
+      "size": 196374139
     },
     "z:/media/kvoy/star.trek.voyager.s05e01.night.mkv": {
       "duration_sec": 2760.042,
       "mtime_ns": 1701292729133814400,
       "size": 217078350
     },
+    "z:/media/kvoy/star.trek.voyager.s05e02.drone.mkv": {
+      "duration_sec": 2763.967,
+      "mtime_ns": 1701292779290825900,
+      "size": 218228571
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e03.extreme.risk.mkv": {
+      "duration_sec": 2762.047,
+      "mtime_ns": 1701292781089526300,
+      "size": 195909103
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e04.in.the.flesh.mkv": {
+      "duration_sec": 2762.047,
+      "mtime_ns": 1701292774140277700,
+      "size": 218643578
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e05.once.upon.a.time.mkv": {
+      "duration_sec": 2756.607,
+      "mtime_ns": 1701292761820636500,
+      "size": 251272581
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e06.timeless.mkv": {
+      "duration_sec": 2760.042,
+      "mtime_ns": 1701292767561495700,
+      "size": 202427803
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e07.infinite.regress.mkv": {
+      "duration_sec": 2760.042,
+      "mtime_ns": 1701292764802497600,
+      "size": 226899715
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e08.nothing.human.mkv": {
+      "duration_sec": 2763.242,
+      "mtime_ns": 1701292771162009300,
+      "size": 211028693
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e09.thirty.days.mkv": {
+      "duration_sec": 2762.047,
+      "mtime_ns": 1701292771383713600,
+      "size": 200368818
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e10.counterpoint.mkv": {
+      "duration_sec": 2763.967,
+      "mtime_ns": 1701292781089526300,
+      "size": 187991319
+    },
     "z:/media/kvoy/star.trek.voyager.s05e11.latent.image.mkv": {
       "duration_sec": 2762.047,
       "mtime_ns": 1701292766801851800,
       "size": 208450557
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e12.bride.of.chaotica!.mkv": {
+      "duration_sec": 2761.066,
+      "mtime_ns": 1701292770843468900,
+      "size": 266744871
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e13.gravity.mkv": {
+      "duration_sec": 2761.066,
+      "mtime_ns": 1701292756270588200,
+      "size": 219693988
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e14.bliss.mkv": {
+      "duration_sec": 2762.047,
+      "mtime_ns": 1701292779007606400,
+      "size": 204444160
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e15.dark.frontier.mkv": {
+      "duration_sec": 5538.111,
+      "mtime_ns": 1701292777078051200,
+      "size": 434670666
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e16.the.disease.mkv": {
+      "duration_sec": 2762.047,
+      "mtime_ns": 1701292782616896900,
+      "size": 195056868
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e17.course.oblivion.mkv": {
+      "duration_sec": 2762.047,
+      "mtime_ns": 1701292777945580300,
+      "size": 192364986
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e18.the.fight.mkv": {
+      "duration_sec": 2760.042,
+      "mtime_ns": 1701292778089924700,
+      "size": 208239781
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e19.think.tank.mkv": {
+      "duration_sec": 2761.066,
+      "mtime_ns": 1701292782438870600,
+      "size": 181889878
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e20.juggernaut.mkv": {
+      "duration_sec": 2759.039,
+      "mtime_ns": 1701292783673245700,
+      "size": 205208188
     },
     "z:/media/kvoy/star.trek.voyager.s05e21.someone.to.watch.over.me.mkv": {
       "duration_sec": 2759.914,
       "mtime_ns": 1701292729213832500,
       "size": 205467706
     },
+    "z:/media/kvoy/star.trek.voyager.s05e22.1159.mkv": {
+      "duration_sec": 2762.047,
+      "mtime_ns": 1701290028960382400,
+      "size": 211817763
+    },
     "z:/media/kvoy/star.trek.voyager.s05e23.relativity.mkv": {
       "duration_sec": 2759.594,
       "mtime_ns": 1701290025065172000,
       "size": 194875967
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e24.warhead.mkv": {
+      "duration_sec": 2758.058,
+      "mtime_ns": 1701290068939709200,
+      "size": 201237873
+    },
+    "z:/media/kvoy/star.trek.voyager.s05e25.equinox.part.i.mkv": {
+      "duration_sec": 2756.031,
+      "mtime_ns": 1701290058173915000,
+      "size": 206232977
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e01.equinox.part.ii.mkv": {
+      "duration_sec": 2638.058,
+      "mtime_ns": 1701288946974315300,
+      "size": 207541323
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e02.survival.instinct.mkv": {
+      "duration_sec": 2640.063,
+      "mtime_ns": 1701288995876271500,
+      "size": 209690650
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e03.barge.of.the.dead.mkv": {
+      "duration_sec": 2639.039,
+      "mtime_ns": 1701288956426007600,
+      "size": 213457591
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e04.tinker.tenor.doctor.spy.mkv": {
+      "duration_sec": 2639.039,
+      "mtime_ns": 1701289006027910200,
+      "size": 212623453
     },
     "z:/media/kvoy/star.trek.voyager.s06e05.alice.mkv": {
       "duration_sec": 2638.058,
       "mtime_ns": 1701288968061591600,
       "size": 216279322
     },
+    "z:/media/kvoy/star.trek.voyager.s06e06.riddles.mkv": {
+      "duration_sec": 2640.063,
+      "mtime_ns": 1701288893479177300,
+      "size": 214868225
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e07.dragon's.teeth.mkv": {
+      "duration_sec": 2639.039,
+      "mtime_ns": 1701288935526266700,
+      "size": 193186225
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e08.one.small.step.mkv": {
+      "duration_sec": 2641.066,
+      "mtime_ns": 1701288935463880600,
+      "size": 204665638
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e09.the.voyager.conspiracy.mkv": {
+      "duration_sec": 2637.055,
+      "mtime_ns": 1701288920708385900,
+      "size": 193011715
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e10.pathfinder.mkv": {
+      "duration_sec": 2638.143,
+      "mtime_ns": 1701288973633322900,
+      "size": 202646320
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e11.fair.haven.mkv": {
+      "duration_sec": 2638.975,
+      "mtime_ns": 1701288943608648400,
+      "size": 234514395
+    },
     "z:/media/kvoy/star.trek.voyager.s06e12.blink.of.an.eye.mkv": {
       "duration_sec": 2636.138,
       "mtime_ns": 1701288979193291400,
       "size": 204766119
     },
+    "z:/media/kvoy/star.trek.voyager.s06e13.virtuoso.mkv": {
+      "duration_sec": 2638.058,
+      "mtime_ns": 1701288830567550500,
+      "size": 203963017
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e14.memorial.mkv": {
+      "duration_sec": 2638.058,
+      "mtime_ns": 1701288858508966800,
+      "size": 237375077
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e15.tsunkatse.mkv": {
+      "duration_sec": 2640.063,
+      "mtime_ns": 1701288988631532400,
+      "size": 296645284
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e16.collective.mkv": {
+      "duration_sec": 2638.058,
+      "mtime_ns": 1701289007695628000,
+      "size": 218565963
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e17.spirit.folk.mkv": {
+      "duration_sec": 2635.69,
+      "mtime_ns": 1701288861779528200,
+      "size": 232912941
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e18.ashes.to.ashes.mkv": {
+      "duration_sec": 2638.122,
+      "mtime_ns": 1701281336855794800,
+      "size": 187539969
+    },
     "z:/media/kvoy/star.trek.voyager.s06e19.child's.play.mkv": {
       "duration_sec": 2639.338,
       "mtime_ns": 1701289006472832800,
       "size": 195421745
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e20.good.shepherd.mkv": {
+      "duration_sec": 2635.455,
+      "mtime_ns": 1701288931244138700,
+      "size": 179291372
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e21.live.fast.and.prosper.mkv": {
+      "duration_sec": 2638.058,
+      "mtime_ns": 1701288847842075100,
+      "size": 208610195
     },
     "z:/media/kvoy/star.trek.voyager.s06e22.muse.mkv": {
       "duration_sec": 2638.058,
@@ -304,6 +1569,136 @@
       "duration_sec": 2638.058,
       "mtime_ns": 1701288975024645400,
       "size": 211621433
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e24.life.line.mkv": {
+      "duration_sec": 2638.058,
+      "mtime_ns": 1701288958063750400,
+      "size": 202642250
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e25.the.haunting.of.deck.twelve.mkv": {
+      "duration_sec": 2640.063,
+      "mtime_ns": 1701288966592023500,
+      "size": 193336750
+    },
+    "z:/media/kvoy/star.trek.voyager.s06e26.unimatrix.zero.part.i.mkv": {
+      "duration_sec": 2636.394,
+      "mtime_ns": 1701289022341015100,
+      "size": 223037998
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e01.unimatrix.zero.part.ii.mkv": {
+      "duration_sec": 2642.047,
+      "mtime_ns": 1701284008854680700,
+      "size": 232170012
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e02.imperfection.mkv": {
+      "duration_sec": 2639.039,
+      "mtime_ns": 1701284183638011800,
+      "size": 202837619
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e03.drive.mkv": {
+      "duration_sec": 2641.066,
+      "mtime_ns": 1701284106320552300,
+      "size": 202290828
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e04.repression.mkv": {
+      "duration_sec": 2639.039,
+      "mtime_ns": 1701284034808109900,
+      "size": 191560045
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e05.critical.care.mkv": {
+      "duration_sec": 2635.05,
+      "mtime_ns": 1701284215019218400,
+      "size": 207616331
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e06.inside.man.mkv": {
+      "duration_sec": 2639.039,
+      "mtime_ns": 1701284199331254900,
+      "size": 238719282
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e07.body.and.soul.mkv": {
+      "duration_sec": 2638.058,
+      "mtime_ns": 1701284049988434900,
+      "size": 204411646
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e08.nightingale.mkv": {
+      "duration_sec": 2638.058,
+      "mtime_ns": 1701284043132409900,
+      "size": 185939026
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e09e10.flesh.and.blood.mkv": {
+      "duration_sec": 5095.914,
+      "mtime_ns": 1701284003467137800,
+      "size": 432371294
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e11.shattered.mkv": {
+      "duration_sec": 2638.058,
+      "mtime_ns": 1701284199998404400,
+      "size": 183056465
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e12.lineage.mkv": {
+      "duration_sec": 2641.087,
+      "mtime_ns": 1701284228519249000,
+      "size": 173813140
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e13.repentance.mkv": {
+      "duration_sec": 2638.911,
+      "mtime_ns": 1701284218486458300,
+      "size": 186823352
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e14.prophecy.mkv": {
+      "duration_sec": 2639.594,
+      "mtime_ns": 1701284220109024100,
+      "size": 197267602
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e15.the.void.mkv": {
+      "duration_sec": 2636.074,
+      "mtime_ns": 1701284231571121900,
+      "size": 165984978
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e16.workforce.part.i.mkv": {
+      "duration_sec": 2637.055,
+      "mtime_ns": 1701284246181977200,
+      "size": 212160142
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e17.workforce.part.ii.mkv": {
+      "duration_sec": 2638.591,
+      "mtime_ns": 1701284211482310900,
+      "size": 176825660
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e18.human.error.mkv": {
+      "duration_sec": 2640.426,
+      "mtime_ns": 1701284164039243500,
+      "size": 172159037
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e19.q2.mkv": {
+      "duration_sec": 2638.634,
+      "mtime_ns": 1701284186419721200,
+      "size": 165620051
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e20.author.author.mkv": {
+      "duration_sec": 2637.055,
+      "mtime_ns": 1701284085966410600,
+      "size": 175467992
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e21.friendship.one.mkv": {
+      "duration_sec": 2644.01,
+      "mtime_ns": 1701284021902584100,
+      "size": 209065136
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e22.natural.law.mkv": {
+      "duration_sec": 2639.039,
+      "mtime_ns": 1701284064220179500,
+      "size": 226874307
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e23.homestead.mkv": {
+      "duration_sec": 2637.055,
+      "mtime_ns": 1701283885720667500,
+      "size": 196118585
+    },
+    "z:/media/kvoy/star.trek.voyager.s07e24.renaissance.man.mkv": {
+      "duration_sec": 2642.047,
+      "mtime_ns": 1701283849016886800,
+      "size": 183410029
     },
     "z:/media/kvoy/star.trek.voyager.s07e25e26.endgame.mkv": {
       "duration_sec": 5216.703,
@@ -360,110 +1755,680 @@
       "mtime_ns": 1766603031306906400,
       "size": 653635639
     },
+    "z:/media/wtng/star.trek.tng.s01e03 - the naked now.mkv": {
+      "duration_sec": 2733.482,
+      "mtime_ns": 1766603244488411900,
+      "size": 400323719
+    },
+    "z:/media/wtng/star.trek.tng.s01e04 - code of honor.mkv": {
+      "duration_sec": 2730.144,
+      "mtime_ns": 1766602903284042900,
+      "size": 397855148
+    },
     "z:/media/wtng/star.trek.tng.s01e05 - the last outpost.mkv": {
       "duration_sec": 2735.338,
       "mtime_ns": 1766602819736757100,
       "size": 425078836
+    },
+    "z:/media/wtng/star.trek.tng.s01e06 - where no one has gone before.mkv": {
+      "duration_sec": 2734.293,
+      "mtime_ns": 1766602913007035700,
+      "size": 406229950
+    },
+    "z:/media/wtng/star.trek.tng.s01e07 - lonely among us.mkv": {
+      "duration_sec": 2732.373,
+      "mtime_ns": 1766602212228966900,
+      "size": 426516829
+    },
+    "z:/media/wtng/star.trek.tng.s01e08 - justice.mkv": {
+      "duration_sec": 2733.269,
+      "mtime_ns": 1766602241052474600,
+      "size": 441523163
+    },
+    "z:/media/wtng/star.trek.tng.s01e09 - the battle.mkv": {
+      "duration_sec": 2730.986,
+      "mtime_ns": 1766602250091947000,
+      "size": 387551143
+    },
+    "z:/media/wtng/star.trek.tng.s01e10 - hide and q.mkv": {
+      "duration_sec": 2731.434,
+      "mtime_ns": 1766602905859573400,
+      "size": 377268652
+    },
+    "z:/media/wtng/star.trek.tng.s01e11 - haven.mkv": {
+      "duration_sec": 2732.906,
+      "mtime_ns": 1766602221411288600,
+      "size": 407689111
+    },
+    "z:/media/wtng/star.trek.tng.s01e12 - the big goodbye.mkv": {
+      "duration_sec": 2731.818,
+      "mtime_ns": 1766602953451558700,
+      "size": 391073580
+    },
+    "z:/media/wtng/star.trek.tng.s01e13 - datalore.mkv": {
+      "duration_sec": 2732.65,
+      "mtime_ns": 1766603245638462400,
+      "size": 353504252
+    },
+    "z:/media/wtng/star.trek.tng.s01e14 - angel one.mkv": {
+      "duration_sec": 2722.09,
+      "mtime_ns": 1766602248708775900,
+      "size": 387698040
+    },
+    "z:/media/wtng/star.trek.tng.s01e15 - 11001001.mkv": {
+      "duration_sec": 2731.413,
+      "mtime_ns": 1766602910157495000,
+      "size": 395637989
+    },
+    "z:/media/wtng/star.trek.tng.s01e16 - too short a season.mkv": {
+      "duration_sec": 2731.285,
+      "mtime_ns": 1766602219752751500,
+      "size": 366151081
+    },
+    "z:/media/wtng/star.trek.tng.s01e17 - when the bough breaks.mkv": {
+      "duration_sec": 2734.698,
+      "mtime_ns": 1766602234163717700,
+      "size": 371091565
+    },
+    "z:/media/wtng/star.trek.tng.s01e18 - home soil.mkv": {
+      "duration_sec": 2732.437,
+      "mtime_ns": 1766602528343625900,
+      "size": 435888199
     },
     "z:/media/wtng/star.trek.tng.s01e19 - coming of age.mkv": {
       "duration_sec": 2734.698,
       "mtime_ns": 1766603246172913200,
       "size": 355357993
     },
+    "z:/media/wtng/star.trek.tng.s01e20 - heart of glory.mkv": {
+      "duration_sec": 2732.437,
+      "mtime_ns": 1766602990574297200,
+      "size": 462787709
+    },
+    "z:/media/wtng/star.trek.tng.s01e21 - the arsenal of freedom.mkv": {
+      "duration_sec": 2732.501,
+      "mtime_ns": 1766603251105871900,
+      "size": 413043520
+    },
     "z:/media/wtng/star.trek.tng.s01e22 - symbiosis.mkv": {
       "duration_sec": 2730.858,
       "mtime_ns": 1766602825370656200,
       "size": 390710859
+    },
+    "z:/media/wtng/star.trek.tng.s01e23 - skin of evil.mkv": {
+      "duration_sec": 2730.436,
+      "mtime_ns": 1766603251616988900,
+      "size": 426394235
+    },
+    "z:/media/wtng/star.trek.tng.s01e24 - we'll always have paris.mkv": {
+      "duration_sec": 2731.114,
+      "mtime_ns": 1766602245940722300,
+      "size": 354997821
+    },
+    "z:/media/wtng/star.trek.tng.s01e25 - conspiracy.mkv": {
+      "duration_sec": 2735.978,
+      "mtime_ns": 1766603247165352300,
+      "size": 346911233
+    },
+    "z:/media/wtng/star.trek.tng.s01e26 - the neutral zone.mkv": {
+      "duration_sec": 2733.674,
+      "mtime_ns": 1766603251655951500,
+      "size": 396034289
+    },
+    "z:/media/wtng/star.trek.tng.s02e01 - the child.mkv": {
+      "duration_sec": 2731.754,
+      "mtime_ns": 1766603034881858600,
+      "size": 370185999
+    },
+    "z:/media/wtng/star.trek.tng.s02e02 - where silence has lease.mkv": {
+      "duration_sec": 2743.765,
+      "mtime_ns": 1766602227610047600,
+      "size": 330774922
+    },
+    "z:/media/wtng/star.trek.tng.s02e03 - elementary, dear data.mkv": {
+      "duration_sec": 2738.751,
+      "mtime_ns": 1766600844078342600,
+      "size": 319589258
+    },
+    "z:/media/wtng/star.trek.tng.s02e04 - the outrageous okona.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766600496231150300,
+      "size": 342154865
+    },
+    "z:/media/wtng/star.trek.tng.s02e05 - loud as a whisper.mkv": {
+      "duration_sec": 2723.519,
+      "mtime_ns": 1766601861283447400,
+      "size": 400127371
+    },
+    "z:/media/wtng/star.trek.tng.s02e06 - the schizoid man.mkv": {
+      "duration_sec": 2750.847,
+      "mtime_ns": 1766599931833662400,
+      "size": 348942866
     },
     "z:/media/wtng/star.trek.tng.s02e07 - unnatural selection.mkv": {
       "duration_sec": 2714.73,
       "mtime_ns": 1766602264185643300,
       "size": 447998563
     },
+    "z:/media/wtng/star.trek.tng.s02e08 - a matter of honor.mkv": {
+      "duration_sec": 2728.746,
+      "mtime_ns": 1766602976822560300,
+      "size": 428479696
+    },
+    "z:/media/wtng/star.trek.tng.s02e09 - the measure of a man.mkv": {
+      "duration_sec": 2734.762,
+      "mtime_ns": 1766602962640124700,
+      "size": 321667806
+    },
     "z:/media/wtng/star.trek.tng.s02e10 - the dauphin.mkv": {
       "duration_sec": 2729.749,
       "mtime_ns": 1766600672275119600,
       "size": 321835125
+    },
+    "z:/media/wtng/star.trek.tng.s02e11 - contagion.mkv": {
+      "duration_sec": 2731.754,
+      "mtime_ns": 1766602691616009400,
+      "size": 410061816
+    },
+    "z:/media/wtng/star.trek.tng.s02e12 - the royale.mkv": {
+      "duration_sec": 2728.746,
+      "mtime_ns": 1766600518966521500,
+      "size": 378334596
+    },
+    "z:/media/wtng/star.trek.tng.s02e13 - time squared.mkv": {
+      "duration_sec": 2729.983,
+      "mtime_ns": 1766602706227996600,
+      "size": 458624980
+    },
+    "z:/media/wtng/star.trek.tng.s02e14 - the icarus factor.mkv": {
+      "duration_sec": 2729.749,
+      "mtime_ns": 1766602093087678700,
+      "size": 308566452
+    },
+    "z:/media/wtng/star.trek.tng.s02e15 - pen pals.mkv": {
+      "duration_sec": 2728.746,
+      "mtime_ns": 1766600426975746500,
+      "size": 361390067
+    },
+    "z:/media/wtng/star.trek.tng.s02e16 - q who.mkv": {
+      "duration_sec": 2728.746,
+      "mtime_ns": 1766602198331845600,
+      "size": 345343034
+    },
+    "z:/media/wtng/star.trek.tng.s02e17 - samaritan snare.mkv": {
+      "duration_sec": 2729.749,
+      "mtime_ns": 1766600689412272300,
+      "size": 334179218
+    },
+    "z:/media/wtng/star.trek.tng.s02e18 - up the long ladder.mkv": {
+      "duration_sec": 2725.738,
+      "mtime_ns": 1766597280150596700,
+      "size": 384914003
     },
     "z:/media/wtng/star.trek.tng.s02e19 - manhunt.mkv": {
       "duration_sec": 2725.738,
       "mtime_ns": 1766602955826846500,
       "size": 369186760
     },
+    "z:/media/wtng/star.trek.tng.s02e20 - the emissary.mkv": {
+      "duration_sec": 2730.8,
+      "mtime_ns": 1766602973047367000,
+      "size": 394198276
+    },
+    "z:/media/wtng/star.trek.tng.s02e21 - peak performance.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766602964422885400,
+      "size": 381588716
+    },
     "z:/media/wtng/star.trek.tng.s02e22 - shades of gray.mkv": {
       "duration_sec": 2729.0,
       "mtime_ns": 1766602667919649600,
       "size": 414694432
+    },
+    "z:/media/wtng/star.trek.tng.s03e01 - evolution.mkv": {
+      "duration_sec": 2731.754,
+      "mtime_ns": 1766602692474261600,
+      "size": 303423523
+    },
+    "z:/media/wtng/star.trek.tng.s03e02 - the ensigns of command.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766602017023267900,
+      "size": 288837384
+    },
+    "z:/media/wtng/star.trek.tng.s03e03 - the survivors.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766602685308542500,
+      "size": 337521697
+    },
+    "z:/media/wtng/star.trek.tng.s03e04 - who watches the watchers.mkv": {
+      "duration_sec": 2731.754,
+      "mtime_ns": 1766602222398025000,
+      "size": 394829640
+    },
+    "z:/media/wtng/star.trek.tng.s03e05 - the bonding.mkv": {
+      "duration_sec": 2733.759,
+      "mtime_ns": 1766602231262240400,
+      "size": 311932507
+    },
+    "z:/media/wtng/star.trek.tng.s03e06 - booby trap.mkv": {
+      "duration_sec": 2732.757,
+      "mtime_ns": 1766602241521412000,
+      "size": 308015699
+    },
+    "z:/media/wtng/star.trek.tng.s03e07 - the enemy.mkv": {
+      "duration_sec": 2729.749,
+      "mtime_ns": 1766602609358925100,
+      "size": 335767210
+    },
+    "z:/media/wtng/star.trek.tng.s03e08 - the price.mkv": {
+      "duration_sec": 2731.754,
+      "mtime_ns": 1766600264544002300,
+      "size": 327446785
     },
     "z:/media/wtng/star.trek.tng.s03e09 - the vengeance factor.mkv": {
       "duration_sec": 2731.754,
       "mtime_ns": 1766600611284110100,
       "size": 322920326
     },
+    "z:/media/wtng/star.trek.tng.s03e10 - the defector.mkv": {
+      "duration_sec": 2732.757,
+      "mtime_ns": 1766602688237884300,
+      "size": 308020196
+    },
+    "z:/media/wtng/star.trek.tng.s03e11 - the hunted.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766602655823099000,
+      "size": 335472564
+    },
     "z:/media/wtng/star.trek.tng.s03e12 - the high ground.mkv": {
       "duration_sec": 2734.762,
       "mtime_ns": 1766600540335711400,
       "size": 328448379
+    },
+    "z:/media/wtng/star.trek.tng.s03e13 - d\u00e9j\u00e0 q.mkv": {
+      "duration_sec": 2731.754,
+      "mtime_ns": 1766602702147013700,
+      "size": 343537397
     },
     "z:/media/wtng/star.trek.tng.s03e14 - a matter of perspective.mkv": {
       "duration_sec": 2731.754,
       "mtime_ns": 1766600512549324400,
       "size": 299449451
     },
+    "z:/media/wtng/star.trek.tng.s03e15 - yesterday's enterprise.mkv": {
+      "duration_sec": 2738.751,
+      "mtime_ns": 1766602663618402600,
+      "size": 286782316
+    },
+    "z:/media/wtng/star.trek.tng.s03e16 - the offspring.mkv": {
+      "duration_sec": 2734.762,
+      "mtime_ns": 1766597267302425600,
+      "size": 272078424
+    },
+    "z:/media/wtng/star.trek.tng.s03e17 - sins of the father.mkv": {
+      "duration_sec": 2740.223,
+      "mtime_ns": 1766602694135017300,
+      "size": 277040255
+    },
+    "z:/media/wtng/star.trek.tng.s03e18 - allegiance.mkv": {
+      "duration_sec": 2729.749,
+      "mtime_ns": 1766600476694435900,
+      "size": 324850393
+    },
+    "z:/media/wtng/star.trek.tng.s03e19 - captain's holiday.mkv": {
+      "duration_sec": 2733.759,
+      "mtime_ns": 1766602139948607900,
+      "size": 343118126
+    },
+    "z:/media/wtng/star.trek.tng.s03e20 - tin man.mkv": {
+      "duration_sec": 2733.759,
+      "mtime_ns": 1766602878821721100,
+      "size": 330685658
+    },
     "z:/media/wtng/star.trek.tng.s03e21 - hollow pursuits.mkv": {
       "duration_sec": 2732.757,
       "mtime_ns": 1766602960891673200,
       "size": 323953058
+    },
+    "z:/media/wtng/star.trek.tng.s03e22 - the most toys.mkv": {
+      "duration_sec": 2727.743,
+      "mtime_ns": 1766602155565060500,
+      "size": 347004381
     },
     "z:/media/wtng/star.trek.tng.s03e23 - sarek.mkv": {
       "duration_sec": 2728.746,
       "mtime_ns": 1766602086154454800,
       "size": 306667057
     },
+    "z:/media/wtng/star.trek.tng.s03e24 - m\u00e9nage \u00e0 troi.mkv": {
+      "duration_sec": 2727.743,
+      "mtime_ns": 1766602157291244900,
+      "size": 367214006
+    },
+    "z:/media/wtng/star.trek.tng.s03e25 - transfigurations.mkv": {
+      "duration_sec": 2732.757,
+      "mtime_ns": 1766599776772882000,
+      "size": 305260531
+    },
+    "z:/media/wtng/star.trek.tng.s03e26-s04e01 - the best of both worlds.mkv": {
+      "duration_sec": 5160.989,
+      "mtime_ns": 1766602647541843800,
+      "size": 658186454
+    },
+    "z:/media/wtng/star.trek.tng.s04e02 - family.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766602647559987200,
+      "size": 404803424
+    },
+    "z:/media/wtng/star.trek.tng.s04e03 - brothers.mkv": {
+      "duration_sec": 2731.754,
+      "mtime_ns": 1766602665897894000,
+      "size": 362944426
+    },
+    "z:/media/wtng/star.trek.tng.s04e04 - suddenly human.mkv": {
+      "duration_sec": 2730.752,
+      "mtime_ns": 1766598301704311400,
+      "size": 287238114
+    },
     "z:/media/wtng/star.trek.tng.s04e05 - remember me.mkv": {
       "duration_sec": 2732.757,
       "mtime_ns": 1766600691801043300,
       "size": 360075587
+    },
+    "z:/media/wtng/star.trek.tng.s04e06 - legacy.mkv": {
+      "duration_sec": 2732.757,
+      "mtime_ns": 1766598822552922100,
+      "size": 324821976
+    },
+    "z:/media/wtng/star.trek.tng.s04e07 - reunion.mkv": {
+      "duration_sec": 2733.76,
+      "mtime_ns": 1766600697828207900,
+      "size": 286244026
+    },
+    "z:/media/wtng/star.trek.tng.s04e08 - future imperfect.mkv": {
+      "duration_sec": 2731.754,
+      "mtime_ns": 1766600684144168000,
+      "size": 317015542
+    },
+    "z:/media/wtng/star.trek.tng.s04e09 - final mission.mkv": {
+      "duration_sec": 2792.831,
+      "mtime_ns": 1766599920410911600,
+      "size": 292214714
+    },
+    "z:/media/wtng/star.trek.tng.s04e10 - the loss.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766599809245163500,
+      "size": 296613469
+    },
+    "z:/media/wtng/star.trek.tng.s04e11 - data's day.mkv": {
+      "duration_sec": 2729.919,
+      "mtime_ns": 1766600740387441500,
+      "size": 342559514
+    },
+    "z:/media/wtng/star.trek.tng.s04e12 - the wounded.mkv": {
+      "duration_sec": 2789.844,
+      "mtime_ns": 1766600640058747600,
+      "size": 301230186
     },
     "z:/media/wtng/star.trek.tng.s04e13 - devil's due.mkv": {
       "duration_sec": 2731.754,
       "mtime_ns": 1766597652289630900,
       "size": 335855372
     },
+    "z:/media/wtng/star.trek.tng.s04e14 - clues.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766602806403068600,
+      "size": 341199951
+    },
+    "z:/media/wtng/star.trek.tng.s04e15 - first contact.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766600692868230100,
+      "size": 367450119
+    },
+    "z:/media/wtng/star.trek.tng.s04e16 - galaxy's child.mkv": {
+      "duration_sec": 2733.759,
+      "mtime_ns": 1766599763094691900,
+      "size": 350073428
+    },
     "z:/media/wtng/star.trek.tng.s04e17 - night terrors.mkv": {
       "duration_sec": 2734.762,
       "mtime_ns": 1766599271810617500,
       "size": 279246641
+    },
+    "z:/media/wtng/star.trek.tng.s04e18 - identity crisis.mkv": {
+      "duration_sec": 2788.842,
+      "mtime_ns": 1766599092111602300,
+      "size": 284225326
+    },
+    "z:/media/wtng/star.trek.tng.s04e19 - the nth degree.mkv": {
+      "duration_sec": 2733.76,
+      "mtime_ns": 1766600703171528600,
+      "size": 322056167
+    },
+    "z:/media/wtng/star.trek.tng.s04e20 - qpid.mkv": {
+      "duration_sec": 2731.754,
+      "mtime_ns": 1766600189752939200,
+      "size": 327484211
+    },
+    "z:/media/wtng/star.trek.tng.s04e21 - the drumhead.mkv": {
+      "duration_sec": 2791.764,
+      "mtime_ns": 1766600681207672500,
+      "size": 282008291
+    },
+    "z:/media/wtng/star.trek.tng.s04e22 - half a life.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766597860154491300,
+      "size": 315222246
+    },
+    "z:/media/wtng/star.trek.tng.s04e23 - the host.mkv": {
+      "duration_sec": 2789.845,
+      "mtime_ns": 1766599057738883600,
+      "size": 294946333
     },
     "z:/media/wtng/star.trek.tng.s04e24 - the mind's eye.mkv": {
       "duration_sec": 2734.762,
       "mtime_ns": 1766597887153154500,
       "size": 312302810
     },
+    "z:/media/wtng/star.trek.tng.s04e25 - in theory.mkv": {
+      "duration_sec": 2733.759,
+      "mtime_ns": 1766599084631647300,
+      "size": 276367744
+    },
+    "z:/media/wtng/star.trek.tng.s04e26 - redemption part i.mkv": {
+      "duration_sec": 2734.762,
+      "mtime_ns": 1766601891190860000,
+      "size": 264280319
+    },
+    "z:/media/wtng/star.trek.tng.s05e01 - redemption part ii.mkv": {
+      "duration_sec": 2732.757,
+      "mtime_ns": 1766602420380843300,
+      "size": 298418246
+    },
+    "z:/media/wtng/star.trek.tng.s05e02 - darmok.mkv": {
+      "duration_sec": 2737.749,
+      "mtime_ns": 1766602696547961300,
+      "size": 366199102
+    },
     "z:/media/wtng/star.trek.tng.s05e03 - ensign ro.mkv": {
       "duration_sec": 2733.781,
       "mtime_ns": 1766602653888674400,
       "size": 300581997
+    },
+    "z:/media/wtng/star.trek.tng.s05e04 - silicon avatar.mkv": {
+      "duration_sec": 2740.757,
+      "mtime_ns": 1766601743015791000,
+      "size": 334528703
+    },
+    "z:/media/wtng/star.trek.tng.s05e05 - disaster.mkv": {
+      "duration_sec": 2733.759,
+      "mtime_ns": 1766602778161658700,
+      "size": 270447521
+    },
+    "z:/media/wtng/star.trek.tng.s05e06 - the game.mkv": {
+      "duration_sec": 2732.757,
+      "mtime_ns": 1766602141779113800,
+      "size": 338341443
     },
     "z:/media/wtng/star.trek.tng.s05e07 - unification i.mkv": {
       "duration_sec": 2747.775,
       "mtime_ns": 1766602381355982700,
       "size": 302789820
     },
+    "z:/media/wtng/star.trek.tng.s05e08 - unification ii.mkv": {
+      "duration_sec": 2744.767,
+      "mtime_ns": 1766602702821813400,
+      "size": 326287566
+    },
+    "z:/media/wtng/star.trek.tng.s05e09 - a matter of time.mkv": {
+      "duration_sec": 2735.743,
+      "mtime_ns": 1766600389315706300,
+      "size": 361433424
+    },
+    "z:/media/wtng/star.trek.tng.s05e10 - new ground.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766602176625312200,
+      "size": 351997500
+    },
+    "z:/media/wtng/star.trek.tng.s05e11 - hero worship.mkv": {
+      "duration_sec": 2729.749,
+      "mtime_ns": 1766602158875954000,
+      "size": 303776730
+    },
     "z:/media/wtng/star.trek.tng.s05e12 - violations.mkv": {
       "duration_sec": 2730.751,
       "mtime_ns": 1766600525652636900,
       "size": 326137293
+    },
+    "z:/media/wtng/star.trek.tng.s05e13 - the masterpiece society.mkv": {
+      "duration_sec": 2732.757,
+      "mtime_ns": 1766599565984099200,
+      "size": 351033423
+    },
+    "z:/media/wtng/star.trek.tng.s05e14 - conundrum.mkv": {
+      "duration_sec": 2733.759,
+      "mtime_ns": 1766602699448745600,
+      "size": 309959919
+    },
+    "z:/media/wtng/star.trek.tng.s05e15 - power play.mkv": {
+      "duration_sec": 2731.754,
+      "mtime_ns": 1766602158273187200,
+      "size": 339917364
+    },
+    "z:/media/wtng/star.trek.tng.s05e16 - ethics.mkv": {
+      "duration_sec": 2740.757,
+      "mtime_ns": 1766599283968553400,
+      "size": 313351981
+    },
+    "z:/media/wtng/star.trek.tng.s05e17 - the outcast.mkv": {
+      "duration_sec": 2737.749,
+      "mtime_ns": 1766600536880511700,
+      "size": 270065152
+    },
+    "z:/media/wtng/star.trek.tng.s05e18 - cause and effect.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766602867399288500,
+      "size": 343666578
+    },
+    "z:/media/wtng/star.trek.tng.s05e19 - the first duty.mkv": {
+      "duration_sec": 2729.749,
+      "mtime_ns": 1766602616796815000,
+      "size": 294649634
+    },
+    "z:/media/wtng/star.trek.tng.s05e20 - cost of living.mkv": {
+      "duration_sec": 2731.754,
+      "mtime_ns": 1766600426717307500,
+      "size": 406219768
+    },
+    "z:/media/wtng/star.trek.tng.s05e21 - the perfect mate.mkv": {
+      "duration_sec": 2793.834,
+      "mtime_ns": 1766600406525390400,
+      "size": 316382482
     },
     "z:/media/wtng/star.trek.tng.s05e22 - imaginary friend.mkv": {
       "duration_sec": 2736.746,
       "mtime_ns": 1766600118071225600,
       "size": 340978282
     },
+    "z:/media/wtng/star.trek.tng.s05e23 - i borg.mkv": {
+      "duration_sec": 2739.754,
+      "mtime_ns": 1766602688456129700,
+      "size": 309445040
+    },
+    "z:/media/wtng/star.trek.tng.s05e24 - the next phase.mkv": {
+      "duration_sec": 2730.751,
+      "mtime_ns": 1766602791260748000,
+      "size": 354741964
+    },
+    "z:/media/wtng/star.trek.tng.s05e25 - the inner light.mkv": {
+      "duration_sec": 2749.482,
+      "mtime_ns": 1766599217925608300,
+      "size": 442926560
+    },
+    "z:/media/wtng/star.trek.tng.s05e26 - times arrow.mkv": {
+      "duration_sec": 2733.759,
+      "mtime_ns": 1766602848647121000,
+      "size": 336670941
+    },
+    "z:/media/wtng/star.trek.tng.s06e01 - times arrow part ii.mkv": {
+      "duration_sec": 2739.754,
+      "mtime_ns": 1766602862642882000,
+      "size": 342443627
+    },
+    "z:/media/wtng/star.trek.tng.s06e02 - realm of fear.mkv": {
+      "duration_sec": 2741.76,
+      "mtime_ns": 1766601734120687900,
+      "size": 334146815
+    },
+    "z:/media/wtng/star.trek.tng.s06e03 - man of the people.mkv": {
+      "duration_sec": 2739.754,
+      "mtime_ns": 1766602816136515900,
+      "size": 314962761
+    },
+    "z:/media/wtng/star.trek.tng.s06e04 - relics.mkv": {
+      "duration_sec": 2737.749,
+      "mtime_ns": 1766602885247264700,
+      "size": 313189476
+    },
     "z:/media/wtng/star.trek.tng.s06e05 - schisms.mkv": {
       "duration_sec": 2739.862,
       "mtime_ns": 1766602145979415600,
       "size": 292249191
+    },
+    "z:/media/wtng/star.trek.tng.s06e06 - true q.mkv": {
+      "duration_sec": 2738.752,
+      "mtime_ns": 1766602533407537800,
+      "size": 278820260
+    },
+    "z:/media/wtng/star.trek.tng.s06e07 - rascals.mkv": {
+      "duration_sec": 2738.752,
+      "mtime_ns": 1766602639500950800,
+      "size": 326318124
+    },
+    "z:/media/wtng/star.trek.tng.s06e08 - a fistful of datas.mkv": {
+      "duration_sec": 2738.752,
+      "mtime_ns": 1766602651737463600,
+      "size": 301329916
+    },
+    "z:/media/wtng/star.trek.tng.s06e09 - the quality of life.mkv": {
+      "duration_sec": 2739.754,
+      "mtime_ns": 1766602164127397500,
+      "size": 307227353
+    },
+    "z:/media/wtng/star.trek.tng.s06e10 - chain of command part i.mkv": {
+      "duration_sec": 2707.733,
+      "mtime_ns": 1766602482604873000,
+      "size": 296537994
+    },
+    "z:/media/wtng/star.trek.tng.s06e11 - chain of command part ii.mkv": {
+      "duration_sec": 2708.736,
+      "mtime_ns": 1766602625900598000,
+      "size": 288509636
+    },
+    "z:/media/wtng/star.trek.tng.s06e12 - ship in a bottle.mkv": {
+      "duration_sec": 2709.141,
+      "mtime_ns": 1766602669295370000,
+      "size": 286736595
     },
     "z:/media/wtng/star.trek.tng.s06e13 - aquiel.mkv": {
       "duration_sec": 2708.736,
@@ -475,30 +2440,185 @@
       "mtime_ns": 1766602681317057300,
       "size": 323589334
     },
+    "z:/media/wtng/star.trek.tng.s06e15 - tapestry.mkv": {
+      "duration_sec": 2709.738,
+      "mtime_ns": 1766602589442938300,
+      "size": 294254449
+    },
     "z:/media/wtng/star.trek.tng.s06e16 - birthright part i.mkv": {
       "duration_sec": 2712.725,
       "mtime_ns": 1766602447635740600,
       "size": 321673162
+    },
+    "z:/media/wtng/star.trek.tng.s06e17 - birthright part ii.mkv": {
+      "duration_sec": 2708.736,
+      "mtime_ns": 1766602657384801600,
+      "size": 396152309
+    },
+    "z:/media/wtng/star.trek.tng.s06e18 - starship mine.mkv": {
+      "duration_sec": 2710.72,
+      "mtime_ns": 1766602151310195100,
+      "size": 304612517
+    },
+    "z:/media/wtng/star.trek.tng.s06e19 - lessons.mkv": {
+      "duration_sec": 2712.725,
+      "mtime_ns": 1766602012234037400,
+      "size": 282531335
+    },
+    "z:/media/wtng/star.trek.tng.s06e20 - the chase.mkv": {
+      "duration_sec": 2709.738,
+      "mtime_ns": 1766602384298712900,
+      "size": 305115862
+    },
+    "z:/media/wtng/star.trek.tng.s06e21 - frame of mind.mkv": {
+      "duration_sec": 2710.72,
+      "mtime_ns": 1766602125995737200,
+      "size": 311398728
+    },
+    "z:/media/wtng/star.trek.tng.s06e22 - suspicions.mkv": {
+      "duration_sec": 2711.424,
+      "mtime_ns": 1766601764462368200,
+      "size": 348045373
+    },
+    "z:/media/wtng/star.trek.tng.s06e23 - rightful heir.mkv": {
+      "duration_sec": 2711.722,
+      "mtime_ns": 1766601325894518200,
+      "size": 326660998
+    },
+    "z:/media/wtng/star.trek.tng.s06e24 - second chances.mkv": {
+      "duration_sec": 2709.738,
+      "mtime_ns": 1766601968718324900,
+      "size": 293474444
+    },
+    "z:/media/wtng/star.trek.tng.s06e25 - timescape.mkv": {
+      "duration_sec": 2707.733,
+      "mtime_ns": 1766601479153108400,
+      "size": 309854038
     },
     "z:/media/wtng/star.trek.tng.s06e26 - descent.mkv": {
       "duration_sec": 2706.73,
       "mtime_ns": 1766602143908376200,
       "size": 337115477
     },
+    "z:/media/wtng/star.trek.tng.s07e01 - descent part ii.mkv": {
+      "duration_sec": 2710.718,
+      "mtime_ns": 1766602131249287100,
+      "size": 334376504
+    },
+    "z:/media/wtng/star.trek.tng.s07e02 - liaisons.mkv": {
+      "duration_sec": 2711.699,
+      "mtime_ns": 1766600680903870800,
+      "size": 301205998
+    },
+    "z:/media/wtng/star.trek.tng.s07e03 - interface.mkv": {
+      "duration_sec": 2711.7,
+      "mtime_ns": 1766601962178498600,
+      "size": 286803446
+    },
+    "z:/media/wtng/star.trek.tng.s07e04 - gambit part i.mkv": {
+      "duration_sec": 2711.699,
+      "mtime_ns": 1766600369460965200,
+      "size": 323874387
+    },
+    "z:/media/wtng/star.trek.tng.s07e05 - gambit part ii.mkv": {
+      "duration_sec": 2709.737,
+      "mtime_ns": 1766600560370821300,
+      "size": 327581928
+    },
+    "z:/media/wtng/star.trek.tng.s07e06 - phantasms.mkv": {
+      "duration_sec": 2710.718,
+      "mtime_ns": 1766600543819163900,
+      "size": 304847661
+    },
+    "z:/media/wtng/star.trek.tng.s07e07 - dark page.mkv": {
+      "duration_sec": 2707.689,
+      "mtime_ns": 1766600538655661900,
+      "size": 316479157
+    },
+    "z:/media/wtng/star.trek.tng.s07e08 - attached.mkv": {
+      "duration_sec": 2707.689,
+      "mtime_ns": 1766600643794237500,
+      "size": 353704623
+    },
     "z:/media/wtng/star.trek.tng.s07e09 - force of nature.mkv": {
       "duration_sec": 2709.695,
       "mtime_ns": 1766600683761671300,
       "size": 311391702
+    },
+    "z:/media/wtng/star.trek.tng.s07e10 - inheritance.mkv": {
+      "duration_sec": 2707.689,
+      "mtime_ns": 1766600665264674000,
+      "size": 294825914
+    },
+    "z:/media/wtng/star.trek.tng.s07e11 - parallels.mkv": {
+      "duration_sec": 2711.764,
+      "mtime_ns": 1766600910873459400,
+      "size": 351106760
+    },
+    "z:/media/wtng/star.trek.tng.s07e12 - the pegasus.mkv": {
+      "duration_sec": 2710.718,
+      "mtime_ns": 1766601459357812600,
+      "size": 298056861
+    },
+    "z:/media/wtng/star.trek.tng.s07e13 - homeward.mkv": {
+      "duration_sec": 2710.718,
+      "mtime_ns": 1766601459418045300,
+      "size": 360806361
     },
     "z:/media/wtng/star.trek.tng.s07e14 - sub rosa.mkv": {
       "duration_sec": 2710.718,
       "mtime_ns": 1766601812265459800,
       "size": 332030239
     },
+    "z:/media/wtng/star.trek.tng.s07e15 - lower decks.mkv": {
+      "duration_sec": 2710.74,
+      "mtime_ns": 1766601812278796200,
+      "size": 350421122
+    },
+    "z:/media/wtng/star.trek.tng.s07e16 - thine own self.mkv": {
+      "duration_sec": 2710.718,
+      "mtime_ns": 1766601703423132300,
+      "size": 381841421
+    },
+    "z:/media/wtng/star.trek.tng.s07e17 - masks.mkv": {
+      "duration_sec": 2711.7,
+      "mtime_ns": 1766599746324404900,
+      "size": 305513747
+    },
+    "z:/media/wtng/star.trek.tng.s07e18 - eye of the beholder.mkv": {
+      "duration_sec": 2710.718,
+      "mtime_ns": 1766599755422631800,
+      "size": 335223979
+    },
+    "z:/media/wtng/star.trek.tng.s07e19 - genesis.mkv": {
+      "duration_sec": 2709.737,
+      "mtime_ns": 1766599759679287700,
+      "size": 291905736
+    },
+    "z:/media/wtng/star.trek.tng.s07e20 - journeys end.mkv": {
+      "duration_sec": 2710.718,
+      "mtime_ns": 1766599739418986700,
+      "size": 312375073
+    },
     "z:/media/wtng/star.trek.tng.s07e21 - firstborn.mkv": {
       "duration_sec": 2710.718,
       "mtime_ns": 1766599716098136900,
       "size": 348932164
+    },
+    "z:/media/wtng/star.trek.tng.s07e22 - bloodlines.mkv": {
+      "duration_sec": 2710.718,
+      "mtime_ns": 1766598932040357800,
+      "size": 289269722
+    },
+    "z:/media/wtng/star.trek.tng.s07e23 - emergence.mkv": {
+      "duration_sec": 2706.708,
+      "mtime_ns": 1766599739118043700,
+      "size": 321042478
+    },
+    "z:/media/wtng/star.trek.tng.s07e24 - preemptive strike.mkv": {
+      "duration_sec": 2708.756,
+      "mtime_ns": 1766600712077006700,
+      "size": 327807805
     },
     "z:/media/wtng/star.trek.tng.s07e25e26 - all good things.mkv": {
       "duration_sec": 5530.516,

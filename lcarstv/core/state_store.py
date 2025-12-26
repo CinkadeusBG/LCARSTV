@@ -14,6 +14,9 @@ from .clock import parse_iso_utc, to_iso_utc
 @dataclass
 class PersistedChannel:
     # Live station state
+    # v2: block-based live state
+    current_block_id: str | None = None
+    # v1 legacy (file-based) preserved for migration; may be absent in new saves
     current_file: str | None = None
     started_at: datetime | None = None
 
@@ -29,6 +32,7 @@ class PersistedChannel:
         started_at_raw = d.get("started_at")
         started_at = parse_iso_utc(str(started_at_raw)) if started_at_raw else None
         return PersistedChannel(
+            current_block_id=d.get("current_block_id"),
             current_file=d.get("current_file"),
             started_at=started_at,
             bag=list(d.get("bag", [])) if d.get("bag") is not None else None,
@@ -40,6 +44,7 @@ class PersistedChannel:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "current_block_id": self.current_block_id,
             "current_file": self.current_file,
             "started_at": to_iso_utc(self.started_at) if self.started_at else None,
             "bag": list(self.bag or []),
@@ -57,7 +62,7 @@ class PersistedState:
 
     @staticmethod
     def empty() -> "PersistedState":
-        return PersistedState(version=1, channels={})
+        return PersistedState(version=2, channels={})
 
 
 class StateStore:
@@ -125,7 +130,8 @@ class StateStore:
 
         self.path.parent.mkdir(parents=True, exist_ok=True)
         data = {
-            "version": int(state.version),
+            # v2: block-based schedule/live state
+            "version": int(max(2, int(state.version))),
             "channels": {k: v.to_dict() for k, v in state.channels.items()},
         }
         # Atomic-ish write

@@ -150,3 +150,39 @@ class DurationCache:
                 print(f"[debug] duration-cache: ffprobe failed; using default {default_duration_sec:.2f}s: {p} ({e})")
             return max(1.0, float(default_duration_sec))
 
+    def peek_duration_sec(self, file_path: str | Path, *, default_duration_sec: float) -> float:
+        """Return cached duration if available, otherwise default without probing.
+
+        This is intended for startup/catalog building where probing *every* media file
+        would be too slow.
+        """
+
+        self._ensure_loaded()
+        assert self._durations is not None
+
+        p = Path(file_path)
+        key = _norm_path_key(p)
+
+        if not p.exists():
+            return max(1.0, float(default_duration_sec))
+
+        try:
+            st = p.stat()
+            mtime_ns = int(getattr(st, "st_mtime_ns", 0) or 0)
+            size = int(getattr(st, "st_size", 0) or 0)
+        except Exception:
+            mtime_ns = 0
+            size = 0
+
+        cached = self._durations.get(key)
+        if cached is not None:
+            dur = cached.get("duration_sec")
+            if (
+                isinstance(dur, (int, float))
+                and float(dur) > 0
+                and int(cached.get("mtime_ns", 0) or 0) == mtime_ns
+                and int(cached.get("size", 0) or 0) == size
+            ):
+                return float(dur)
+
+        return max(1.0, float(default_duration_sec))
