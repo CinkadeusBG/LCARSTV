@@ -9,7 +9,7 @@ from lcarstv.core.clock import now_utc
 from lcarstv.core.config import load_channels, load_settings_profile
 from lcarstv.core.station import Station
 from lcarstv.input.keyboard import KeyboardInput
-from lcarstv.player import MpvPlayer
+from lcarstv.player import Player, create_player
 
 
 def _parse_args() -> argparse.Namespace:
@@ -64,14 +64,9 @@ def main() -> int:
     print("Controls: PageUp/Up=Channel Up, PageDown/Down=Channel Down, Q=Quit")
     print()
 
-    player: MpvPlayer | None = None
+    player: Player | None = None
     if not args.dry_run:
-        player = MpvPlayer(
-            debug=settings.debug,
-            ipc_trace=settings.ipc_trace,
-            static_burst_path=str(settings.static_burst_path) if settings.static_burst_path else None,
-            static_burst_duration_sec=0.4,
-        )
+        player = create_player(settings)
 
     # Throttle auto-advance polling (keep low CPU / low IPC spam).
     last_auto_poll = 0.0

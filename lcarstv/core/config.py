@@ -78,6 +78,12 @@ class Settings:
     default_cooldown: int
     debug: bool
     ipc_trace: bool
+    # Playback backend selector.
+    #
+    # Values:
+    # - "mpv" (default)
+    # - "vlc"
+    player_backend: str
     static_burst_path: Path | None
     end_epsilon_sec: float
 
@@ -121,6 +127,15 @@ def load_settings(path: Path) -> Settings:
     default_cooldown = int(data.get("default_cooldown", 10))
     debug = bool(data.get("debug", False))
     ipc_trace = bool(data.get("ipc_trace", False))
+
+    player_backend = str(data.get("player_backend", "mpv")).strip().lower()
+    if player_backend not in ("mpv", "vlc"):
+        # Keep behavior robust and backward compatible.
+        # Do not raise on unknown values; fall back to mpv.
+        if debug:
+            print(f"[config] warn: unknown player_backend={player_backend!r}; falling back to 'mpv'")
+        player_backend = "mpv"
+
     static_burst_raw = data.get("static_burst_path")
     static_burst_path = Path(static_burst_raw) if static_burst_raw else None
     end_epsilon_sec = float(data.get("end_epsilon_sec", 0.25))
@@ -130,6 +145,7 @@ def load_settings(path: Path) -> Settings:
         default_cooldown=default_cooldown,
         debug=debug,
         ipc_trace=ipc_trace,
+        player_backend=player_backend,
         static_burst_path=static_burst_path,
         end_epsilon_sec=end_epsilon_sec,
     )

@@ -1,0 +1,7 @@
+﻿VLC version 3.0.20 Vetinari (3.0.20-0-g6f0d0ab126)
+Compiled by videolan on runner-sgapdqg-project-435-concurrent-1 (Oct 30 2023 08:52:32)
+Compiler: gcc version 6.4.0 (GCC)
+This program comes with NO WARRANTY, to the extent permitted by law.
+You may redistribute it under the terms of the GNU General Public License;
+see the file named COPYING for details.
+Written by the VideoLAN team; see the AUTHORS file.

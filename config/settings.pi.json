@@ -3,6 +3,7 @@
   "default_duration_sec": 1800,
   "debug": true,
   "ipc_trace": false,
+  "player_backend": "mpv",
   "static_burst_path": "/srv/media/artifacts/static.mp4",
   "end_epsilon_sec": 0.25
 }
