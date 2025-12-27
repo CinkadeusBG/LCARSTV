@@ -51,6 +51,21 @@ Executable discovery order on Windows:
 - `C:\\Program Files\\VideoLAN\\VLC\\vlc.exe`
 - `C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe`
 
+#### Windows VLC window positioning troubleshooting
+
+VLC persists window positions in `%APPDATA%\vlc`. If the video window appears off-screen
+or is invisible:
+
+1. Close LCARSTV
+2. Delete the folder: `%APPDATA%\vlc`
+3. Restart LCARSTV
+
+This resets VLC's window placement to defaults.
+
+**Note:** LCARSTV will log a reminder about this on startup if the VLC config folder is detected.
+
+**VLC stderr output:** On Windows (non-debug mode), VLC stderr is logged to: `%TEMP%\lcarstv-vlc-stderr.log`
+
 ### Composite SDL test command
 
 VLC is launched with `--vout=sdl` by default. You may need SDL framebuffer env vars

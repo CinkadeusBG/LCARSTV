@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import os
+import signal
 import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
+from typing import IO
 
 
 @dataclass
@@ -28,6 +30,10 @@ class VlcPlayer:
     # Use SDL video output by default for composite setups.
     vout: str = "sdl"
 
+    # Static burst configuration (for channel tune effect).
+    static_burst_path: str | None = None
+    static_burst_duration_sec: float = 0.5
+
     # Playback state tracking.
     _proc: subprocess.Popen[str] | None = None
     _current_media_path: str | None = None
@@ -41,6 +47,12 @@ class VlcPlayer:
 
     # Best-effort: avoid repeating diagnostics every start.
     _did_diag: bool = False
+
+    # Windows VLC config warning tracking.
+    _vlc_config_warned: bool = False
+
+    # Windows stderr log file handle.
+    _stderr_log_file: IO[str] | None = None
 
     def set_playback_guard(self, *, seconds: float, reason: str) -> None:
         seconds = max(0.0, float(seconds))
@@ -137,6 +149,15 @@ class VlcPlayer:
         # Nothing to keep warm; VLC is started per-play.
         self._diag()
 
+        # Windows VLC config warning (once per session, or always in debug).
+        if os.name == "nt" and (not self._vlc_config_warned or self.debug):
+            appdata = os.environ.get("APPDATA", "")
+            if appdata:
+                vlc_config = os.path.join(appdata, "vlc")
+                if os.path.exists(vlc_config):
+                    print(f"[info] VLC config found at {vlc_config}. If video appears off-screen, delete this folder and restart.")
+                    self._vlc_config_warned = True
+
     def _build_args(self, file_path: str, start_sec: float) -> list[str]:
         exe = self._select_vlc_exe()
         if exe is None:
@@ -144,34 +165,35 @@ class VlcPlayer:
 
         start_sec = max(0.0, float(start_sec))
 
-        # Keep this minimal and explicit.
-        # Notes:
-        # - --intf dummy: no UI.
-        # - --no-video-title-show: hide filename/title overlay.
-        # - --no-osd: disable OSD.
-        # - --avcodec-hw=none: force software decoding.
-        # - --vout=sdl: SDL output tends to behave well for composite.
-        # - --start-time=<sec>: deterministic start offset.
-        # - --play-and-exit: process exits at end of file (enables EOF via proc exit).
-        args = [
-            exe,
-            "--intf",
-            "dummy",
-            "--fullscreen",
-            "--no-video-title-show",
-            "--no-osd",
-            "--avcodec-hw=none",
-            f"--vout={self.vout}",
-            f"--start-time={start_sec}",
-            "--play-and-exit",
-            file_path,
-        ]
+        # Platform-specific argument building.
+        # Windows: Let VLC use native Direct3D/OpenGL output with default interface.
+        # Linux/Pi: Use composite-friendly SDL output with dummy interface.
+        is_windows = os.name == "nt"
+
+        args = [exe, "--fullscreen", "--no-video-title-show", "--no-osd"]
+
+        if is_windows:
+            # Windows: native video output, no dummy interface.
+            # Let VLC choose Direct3D/OpenGL automatically.
+            pass
+        else:
+            # Linux/Pi: composite-friendly output.
+            args.extend(["--intf", "dummy"])
+            args.extend([f"--vout={self.vout}"])
+
+        # Common args for all platforms.
+        args.extend(["--avcodec-hw=none", f"--start-time={start_sec}", file_path])
+
         return args
 
     def _log_launch_context(self, args: list[str], env: dict[str, str]) -> None:
         if not self.debug:
             return
+        
+        platform_name = "Windows" if os.name == "nt" else "Linux/Pi"
+        print(f"[debug] vlc: platform={platform_name}")
         print(f"[debug] vlc: launch args: {subprocess.list2cmdline(args)}")
+        
         # Only *honor* SDL env vars by inheriting env; do not hardcode defaults.
         keys = ["SDL_VIDEODRIVER", "SDL_FBDEV", "SDL_AUDIODRIVER", "DISPLAY", "WAYLAND_DISPLAY"]
         for k in keys:
@@ -187,24 +209,118 @@ class VlcPlayer:
         self._last_proc_running = False
         self._ended_for_path = None
 
+        # Close Windows stderr log file if open.
+        if self._stderr_log_file:
+            try:
+                self._stderr_log_file.close()
+            except Exception:
+                pass
+            self._stderr_log_file = None
+
         if p is None:
             return
 
         try:
-            # Most reliable for VLC; terminate first, then kill if needed.
-            p.terminate()
-            try:
-                p.wait(timeout=2.0)
-            except Exception:
-                p.kill()
-        except Exception:
-            pass
+            # Platform-specific robust termination.
+            if os.name == "nt":
+                # Windows: Use taskkill to terminate entire process tree.
+                # VLC on Windows may spawn child processes that don't get cleaned up
+                # by Python's terminate()/kill() alone.
+                if self.debug:
+                    print(f"[debug] vlc: stop: taskkill /PID {p.pid} /T /F")
+                
+                result = subprocess.run(
+                    ["taskkill", "/PID", str(p.pid), "/T", "/F"],
+                    capture_output=True,
+                    text=True,
+                    timeout=3.0
+                )
+                
+                if self.debug and result.returncode != 0:
+                    print(f"[debug] vlc: taskkill returned {result.returncode}: {result.stderr.strip()}")
+                
+                # Brief wait to confirm termination.
+                try:
+                    p.wait(timeout=0.5)
+                except Exception:
+                    # Process already terminated or taskkill handled it.
+                    pass
+            else:
+                # Linux: Use process group termination for clean shutdown.
+                # Try SIGTERM first (graceful), then SIGKILL if needed.
+                try:
+                    if self.debug:
+                        print(f"[debug] vlc: stop: killpg({p.pid}, SIGTERM)")
+                    os.killpg(p.pid, signal.SIGTERM)
+                    
+                    # Wait briefly for graceful shutdown.
+                    try:
+                        p.wait(timeout=1.0)
+                    except subprocess.TimeoutExpired:
+                        # Process didn't terminate gracefully, use SIGKILL.
+                        if self.debug:
+                            print(f"[debug] vlc: stop: killpg({p.pid}, SIGKILL)")
+                        os.killpg(p.pid, signal.SIGKILL)
+                        try:
+                            p.wait(timeout=0.5)
+                        except Exception:
+                            pass
+                except ProcessLookupError:
+                    # Process group already terminated.
+                    if self.debug:
+                        print(f"[debug] vlc: stop: process group {p.pid} already gone")
+                except Exception as e:
+                    # Fallback to standard terminate/kill if killpg fails.
+                    if self.debug:
+                        print(f"[debug] vlc: stop: killpg failed ({e}), using terminate/kill")
+                    p.terminate()
+                    try:
+                        p.wait(timeout=1.0)
+                    except Exception:
+                        p.kill()
+        except Exception as e:
+            # Best-effort; never raise from stop().
+            if self.debug:
+                print(f"[debug] vlc: stop: exception during termination: {e}")
 
     def close(self) -> None:
         self.stop()
 
     def play_with_static_burst(self, file_path: str, start_sec: float, *, call_sign: str | None = None) -> None:
-        # mpv-specific UX effect; for VLC backend keep deterministic and simple.
+        """Play a short static burst before switching to the tuned channel.
+
+        Sequence:
+        - Play static.mp4 from the beginning
+        - Wait for static_burst_duration_sec
+        - Play the actual channel content at start_sec
+        """
+
+        # If static burst path is configured and exists, play it first.
+        if self.static_burst_path:
+            static_path = Path(self.static_burst_path)
+            if static_path.exists():
+                if self.debug:
+                    print(f"[debug] vlc: static burst start: {self.static_burst_path}")
+
+                # Set guard to suppress premature end triggers during static and tune.
+                self.set_playback_guard(
+                    seconds=float(self.static_burst_duration_sec) + 0.75,
+                    reason="STATIC_TUNE"
+                )
+
+                # Play static burst from beginning.
+                self.play(str(static_path), 0)
+
+                # Wait for static burst duration.
+                time.sleep(max(0.0, float(self.static_burst_duration_sec)))
+
+                if self.debug:
+                    print("[debug] vlc: static burst end")
+            else:
+                if self.debug:
+                    print(f"[debug] vlc: static file missing, skipping: {self.static_burst_path}")
+
+        # Play the actual channel content.
         self.play(file_path, start_sec, call_sign=call_sign)
 
     def play(self, file_path: str, start_sec: float, *, call_sign: str | None = None) -> None:
@@ -225,15 +341,39 @@ class VlcPlayer:
         args = self._build_args(str(p), start_sec)
         self._log_launch_context(args, env)
 
-        # Do not swallow output: inherit stdout/stderr for journald/console.
-        self._proc = subprocess.Popen(
-            args,
-            stdin=subprocess.DEVNULL,
-            stdout=None,
-            stderr=None,
-            text=True,
-            env=env,
-        )
+        # Platform-specific subprocess configuration.
+        popen_kwargs = {
+            "stdin": subprocess.DEVNULL,
+            "stdout": None,
+            "stderr": None,
+            "text": True,
+            "env": env,
+        }
+
+        # Windows-specific: prevent console popup and log stderr to file.
+        if os.name == "nt":
+            popen_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+
+            # In non-debug mode, log stderr to temp directory.
+            if not self.debug:
+                temp_dir = os.environ.get("TEMP", ".")
+                log_path = os.path.join(temp_dir, "lcarstv-vlc-stderr.log")
+                try:
+                    self._stderr_log_file = open(log_path, "w")
+                    # Write header with timestamp and PID.
+                    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+                    self._stderr_log_file.write(f"[{timestamp}] VLC stderr log, PID={os.getpid()}\n")
+                    self._stderr_log_file.flush()
+                    popen_kwargs["stderr"] = self._stderr_log_file
+                except Exception as e:
+                    # Best-effort logging; don't crash playback.
+                    if self.debug:
+                        print(f"[debug] vlc: failed to open stderr log: {e}")
+        else:
+            # Linux: Create new process group for reliable killpg() in stop().
+            popen_kwargs["start_new_session"] = True
+
+        self._proc = subprocess.Popen(args, **popen_kwargs)
 
         self._current_media_path = str(p)
         self._last_proc_running = True

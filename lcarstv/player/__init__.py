@@ -49,7 +49,11 @@ def create_player(settings: Settings) -> Player:
     backend = str(settings.player_backend or "mpv").strip().lower()
     if backend == "vlc":
         # Allow VLC on Windows *if installed*.
-        cand = VlcPlayer(debug=settings.debug)
+        cand = VlcPlayer(
+            debug=settings.debug,
+            static_burst_path=str(settings.static_burst_path) if settings.static_burst_path else None,
+            static_burst_duration_sec=0.5,
+        )
         if not cand.has_vlc():
             if settings.debug:
                 print("[player] warn: vlc backend requested but vlc/cvlc not found; falling back to mpv")
