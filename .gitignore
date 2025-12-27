@@ -2,6 +2,27 @@ __pycache__/
 *.py[cod]
 *.pyo
 
+# C extensions / compiled python
+*.so
+*.pyd
+*.dll
+
+# Packaging / build outputs
+build/
+dist/
+*.egg-info/
+
+# Type checking / test / coverage caches
+.mypy_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Logs
+*.log
+
 .pytest_cache/
 .ruff_cache/
 
@@ -11,3 +32,21 @@ venv/
 
 # editor
 .vscode/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Binaries / compiled artifacts
+*.exe
+*.bin
+*.o
+*.obj
+*.a
+*.lib
+*.dylib
+
+# Runtime-generated state/cache (regenerated at runtime)
+data/state.json
+data/durations.json
+data/*.tmp
