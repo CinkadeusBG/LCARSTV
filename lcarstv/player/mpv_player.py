@@ -550,6 +550,9 @@ class MpvPlayer:
         # Keep this minimal; no overlays/shaders/UI extras.
         args = [
             self.mpv_exe,
+            # Default mpv volume is too low for our setup.
+            # Set a high startup volume immediately.
+            "--volume=300",
             # Force fullscreen on all platforms.
             # Use launch flags (not window manager shortcuts).
             "--fullscreen",
@@ -566,7 +569,6 @@ class MpvPlayer:
             "--sid=no",
             "--sub-auto=no",
             "--keep-open=no",
-            "--volume=100",
         ]
 
         if self.debug:
