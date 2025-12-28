@@ -5,7 +5,7 @@
   "ipc_trace": false,
   "static_burst_path": "/srv/smb/media/artifacts/static.mp4",
   "end_epsilon_sec": 0.25,
-  "call_sign_inset_right_px": 500,
+  "call_sign_inset_right_px": 450,
   "call_sign_inset_top_px": 100,
   "call_sign_duration_sec": 4
 }
