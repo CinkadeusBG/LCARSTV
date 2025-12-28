@@ -552,7 +552,7 @@ class MpvPlayer:
             self.mpv_exe,
             # Default mpv volume is too low for our setup.
             # Set a high startup volume immediately.
-            "--volume=180",
+            "--volume=100",
             # Force fullscreen on all platforms.
             # Use launch flags (not window manager shortcuts).
             "--fullscreen",
