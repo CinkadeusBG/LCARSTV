@@ -73,6 +73,7 @@ def main() -> int:
             static_burst_duration_sec=0.4,
             call_sign_inset_right_px=settings.call_sign_inset_right_px,
             call_sign_inset_top_px=settings.call_sign_inset_top_px,
+            call_sign_duration_sec=settings.call_sign_duration_sec,
         )
 
     # Throttle auto-advance polling (keep low CPU / low IPC spam).

@@ -85,6 +85,7 @@ class Settings:
     # (Higher right inset moves the label left; higher top inset moves it down.)
     call_sign_inset_right_px: int
     call_sign_inset_top_px: int
+    call_sign_duration_sec: float
 
 
 def load_channels_config(path: Path) -> ChannelsConfig:
@@ -133,6 +134,7 @@ def load_settings(path: Path) -> Settings:
     # Call-sign overlay position (pixel insets from top-right).
     call_sign_inset_right_px = int(data.get("call_sign_inset_right_px", 0))
     call_sign_inset_top_px = int(data.get("call_sign_inset_top_px", 0))
+    call_sign_duration_sec = float(data.get("call_sign_duration_sec", 1.5))
     return Settings(
         extensions=extensions,
         default_duration_sec=default_duration_sec,
@@ -143,4 +145,5 @@ def load_settings(path: Path) -> Settings:
         end_epsilon_sec=end_epsilon_sec,
         call_sign_inset_right_px=call_sign_inset_right_px,
         call_sign_inset_top_px=call_sign_inset_top_px,
+        call_sign_duration_sec=call_sign_duration_sec,
     )

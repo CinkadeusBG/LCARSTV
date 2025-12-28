@@ -27,6 +27,9 @@ class MpvPlayer:
     call_sign_inset_right_px: int = 0
     call_sign_inset_top_px: int = 0
 
+    # Call-sign OSD duration (seconds).
+    call_sign_duration_sec: float = 1.5
+
     _proc: subprocess.Popen[str] | None = None
     _ipc: MpvIpcClient | None = None
 
@@ -658,7 +661,7 @@ class MpvPlayer:
         # Overlay must appear after the static burst (if any) and when real content begins.
         if call_sign is not None:
             try:
-                self.show_call_sign_osd(call_sign)
+                self.show_call_sign_osd(call_sign, duration_sec=float(self.call_sign_duration_sec))
             except Exception:
                 # Best-effort: never break playback for an overlay.
                 if self.debug:
