@@ -22,6 +22,11 @@ class MpvPlayer:
     static_burst_path: str | None = None
     static_burst_duration_sec: float = 0.4
 
+    # Call-sign OSD position tuning (pixel insets from top-right).
+    # These are applied via ASS \pos(x,y) when mpv dimensions are available.
+    call_sign_inset_right_px: int = 0
+    call_sign_inset_top_px: int = 0
+
     _proc: subprocess.Popen[str] | None = None
     _ipc: MpvIpcClient | None = None
 
@@ -126,9 +131,28 @@ class MpvPlayer:
         # Light stroke around the letters (no background box).
         outline_px = 2
 
-        ass_text = (
-            rf"{{\an9\fnConsolas\fs{font_size}\1c&H00FF00&\bord{outline_px}\3c&H000000&\shad0}}{text}"
-        )
+        # Optional explicit positioning.
+        # Prefer OSD dimensions (matches the on-screen target area), fall back to video dims.
+        osd_w = self._get_float_property("osd-width")
+        if osd_w is None:
+            osd_w = self._get_float_property("dwidth")
+
+        osd_h = self._get_float_property("osd-height")
+        if osd_h is None:
+            osd_h = self._get_float_property("dheight")
+
+        inset_r = max(0, int(self.call_sign_inset_right_px))
+        inset_t = max(0, int(self.call_sign_inset_top_px))
+
+        # If we can compute coordinates, set a fixed position; otherwise rely on \an9 default.
+        pos_tag = ""
+        if osd_w is not None and osd_h is not None:
+            # Keep coordinates within the frame.
+            x = max(0, min(int(osd_w), int(osd_w) - inset_r))
+            y = max(0, min(int(osd_h), inset_t))
+            pos_tag = rf"\pos({x},{y})"
+
+        ass_text = rf"{{\an9{pos_tag}\fnConsolas\fs{font_size}\1c&H00FF00&\bord{outline_px}\3c&H000000&\shad0}}{text}"
 
         # Replace the overlay each time (same id).
         self._ipc.command("osd-overlay", self._call_sign_overlay_id, "ass-events", ass_text, timeout_sec=2.0)

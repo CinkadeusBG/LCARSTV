@@ -71,6 +71,8 @@ def main() -> int:
             ipc_trace=settings.ipc_trace,
             static_burst_path=str(settings.static_burst_path) if settings.static_burst_path else None,
             static_burst_duration_sec=0.4,
+            call_sign_inset_right_px=settings.call_sign_inset_right_px,
+            call_sign_inset_top_px=settings.call_sign_inset_top_px,
         )
 
     # Throttle auto-advance polling (keep low CPU / low IPC spam).

@@ -80,6 +80,11 @@ class Settings:
     ipc_trace: bool
     static_burst_path: Path | None
     end_epsilon_sec: float
+    # Call-sign OSD position tuning.
+    # These are pixel insets from the top-right corner.
+    # (Higher right inset moves the label left; higher top inset moves it down.)
+    call_sign_inset_right_px: int
+    call_sign_inset_top_px: int
 
 
 def load_channels_config(path: Path) -> ChannelsConfig:
@@ -124,6 +129,10 @@ def load_settings(path: Path) -> Settings:
     static_burst_raw = data.get("static_burst_path")
     static_burst_path = Path(static_burst_raw) if static_burst_raw else None
     end_epsilon_sec = float(data.get("end_epsilon_sec", 0.25))
+
+    # Call-sign overlay position (pixel insets from top-right).
+    call_sign_inset_right_px = int(data.get("call_sign_inset_right_px", 0))
+    call_sign_inset_top_px = int(data.get("call_sign_inset_top_px", 0))
     return Settings(
         extensions=extensions,
         default_duration_sec=default_duration_sec,
@@ -132,4 +141,6 @@ def load_settings(path: Path) -> Settings:
         ipc_trace=ipc_trace,
         static_burst_path=static_burst_path,
         end_epsilon_sec=end_epsilon_sec,
+        call_sign_inset_right_px=call_sign_inset_right_px,
+        call_sign_inset_top_px=call_sign_inset_top_px,
     )
