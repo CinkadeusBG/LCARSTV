@@ -9,7 +9,7 @@
   "call_sign_inset_top_px": 100,
   "call_sign_duration_sec": 4,
 
-  "gpio_enable": false,
+  "gpio_enable": true,
   "gpio_btn_up": 17,
   "gpio_btn_down": 27,
   "gpio_btn_quit": 22,
