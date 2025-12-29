@@ -30,6 +30,54 @@ class Station:
     active_call_sign: str
     settings: Settings
 
+    def _prewarm_channels(self, now: datetime) -> None:
+        """Prewarm channel runtime state to reduce first-tune latency.
+
+        Why this exists:
+        - Tuning is intentionally read-only (no StateStore writes).
+        - The first tune to a channel can still be slow because:
+          1) SmartRandomSelector may need to build a per-thread preview copy of a
+             channel's scheduler state (deep copy of the bag).
+          2) ChannelRuntime.get_current_block() may run ffprobe (DurationCache.get_duration_sec)
+             if the currently-airing block contains files without cached durations.
+
+        Prewarming shifts those one-time costs to startup.
+
+        Notes:
+        - This intentionally MAY write to durations.json (duration cache) because that
+          is a performance cache, not live scheduler state.
+        - This MUST NOT write to the station StateStore; we only operate with persist=False
+          for scheduler preview operations.
+        """
+
+        for call_sign, chan in self.channels.items():
+            # Ensure preview scheduler state exists (no persistence).
+            try:
+                chan.selector.ensure_initialized(
+                    call_sign=call_sign,
+                    items=chan.eligible_block_ids,
+                    persist=False,
+                    save=False,
+                )
+            except Exception:
+                # Best-effort; never fail boot due to prewarm.
+                pass
+
+            # Bring schedule up to now in-memory (no persistence).
+            # Keep debug=False here to avoid startup log spam; tune/advance already log
+            # at the appropriate times.
+            try:
+                chan.sync_to_now(now, reason="STARTUP", debug=False, persist=False)
+            except Exception:
+                pass
+
+            # Hydrate durations for the *currently airing* block.
+            # This may trigger ffprobe for uncached files, but only for one block per channel.
+            try:
+                chan.get_current_block()
+            except Exception:
+                pass
+
     @staticmethod
     def from_configs(
         *,
@@ -205,7 +253,10 @@ class Station:
 
         call_signs = channels_cfg.ordered_call_signs()
         active = call_signs[0]
-        return Station(call_signs=call_signs, channels=channels, active_call_sign=active, settings=settings)
+
+        st = Station(call_signs=call_signs, channels=channels, active_call_sign=active, settings=settings)
+        st._prewarm_channels(now)
+        return st
 
     def _idx(self) -> int:
         return self.call_signs.index(self.active_call_sign)
