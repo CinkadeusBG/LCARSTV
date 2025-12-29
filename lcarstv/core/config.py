@@ -87,6 +87,14 @@ class Settings:
     call_sign_inset_top_px: int
     call_sign_duration_sec: float
 
+    # Raspberry Pi GPIO button input (optional; off by default).
+    gpio_enable: bool = False
+    gpio_btn_up: int | None = None
+    gpio_btn_down: int | None = None
+    gpio_btn_quit: int | None = None
+    gpio_pull_up: bool = True
+    gpio_bounce_sec: float = 0.05
+
 
 def load_channels_config(path: Path) -> ChannelsConfig:
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -135,6 +143,28 @@ def load_settings(path: Path) -> Settings:
     call_sign_inset_right_px = int(data.get("call_sign_inset_right_px", 0))
     call_sign_inset_top_px = int(data.get("call_sign_inset_top_px", 0))
     call_sign_duration_sec = float(data.get("call_sign_duration_sec", 1.5))
+
+    # GPIO button settings (optional; safe defaults).
+    gpio_enable = bool(data.get("gpio_enable", False))
+    gpio_btn_up_raw = data.get("gpio_btn_up")
+    gpio_btn_down_raw = data.get("gpio_btn_down")
+    gpio_btn_quit_raw = data.get("gpio_btn_quit")
+
+    def _to_int_or_none(v: object) -> int | None:
+        if v is None:
+            return None
+        try:
+            return int(v)
+        except Exception:
+            return None
+
+    gpio_btn_up = _to_int_or_none(gpio_btn_up_raw)
+    gpio_btn_down = _to_int_or_none(gpio_btn_down_raw)
+    gpio_btn_quit = _to_int_or_none(gpio_btn_quit_raw)
+
+    gpio_pull_up = bool(data.get("gpio_pull_up", True))
+    gpio_bounce_sec = float(data.get("gpio_bounce_sec", 0.05))
+
     return Settings(
         extensions=extensions,
         default_duration_sec=default_duration_sec,
@@ -146,4 +176,10 @@ def load_settings(path: Path) -> Settings:
         call_sign_inset_right_px=call_sign_inset_right_px,
         call_sign_inset_top_px=call_sign_inset_top_px,
         call_sign_duration_sec=call_sign_duration_sec,
+        gpio_enable=gpio_enable,
+        gpio_btn_up=gpio_btn_up,
+        gpio_btn_down=gpio_btn_down,
+        gpio_btn_quit=gpio_btn_quit,
+        gpio_pull_up=gpio_pull_up,
+        gpio_bounce_sec=gpio_bounce_sec,
     )

@@ -3,12 +3,14 @@ from __future__ import annotations
 import argparse
 import os
 import time
+import queue
 from pathlib import Path
 
 from lcarstv.core.clock import now_utc
 from lcarstv.core.config import load_channels, load_settings_profile
 from lcarstv.core.station import Station
 from lcarstv.input.keyboard import KeyboardInput
+from lcarstv.input.keys import InputEvent
 from lcarstv.player import MpvPlayer
 
 
@@ -64,6 +66,49 @@ def main() -> int:
     print("Controls: PageUp/Up=Channel Up, PageDown/Down=Channel Down, Q=Quit")
     print()
 
+    # Optional GPIO buttons (Pi/Linux only; must be explicitly enabled via settings.gpio_enable).
+    gpio = None
+    gpio_q: queue.SimpleQueue[InputEvent] = queue.SimpleQueue()
+    if os.name != "nt" and bool(getattr(settings, "gpio_enable", False)):
+        up_pin = getattr(settings, "gpio_btn_up", None)
+        down_pin = getattr(settings, "gpio_btn_down", None)
+        quit_pin = getattr(settings, "gpio_btn_quit", None)
+        pull_up = bool(getattr(settings, "gpio_pull_up", True))
+        bounce_sec = float(getattr(settings, "gpio_bounce_sec", 0.05))
+
+        def _valid_pin(p: object) -> bool:
+            try:
+                return int(p) > 0
+            except Exception:
+                return False
+
+        if not (_valid_pin(up_pin) and _valid_pin(down_pin)):
+            print(
+                "[gpio] gpio_enable=true but gpio_btn_up/gpio_btn_down are missing or invalid; GPIO disabled."
+            )
+        else:
+            try:
+                from lcarstv.input.gpio_buttons import GpioButtons
+
+                gpio = GpioButtons(
+                    on_up=lambda: gpio_q.put(InputEvent(kind="channel_up")),
+                    on_down=lambda: gpio_q.put(InputEvent(kind="channel_down")),
+                    on_quit=(lambda: gpio_q.put(InputEvent(kind="quit"))) if quit_pin is not None else None,
+                    btn_up_pin=int(up_pin),
+                    btn_down_pin=int(down_pin),
+                    btn_quit_pin=int(quit_pin) if quit_pin is not None else None,
+                    pull_up=pull_up,
+                    bounce_sec=bounce_sec,
+                )
+                print(
+                    f"[gpio] enabled: up={int(up_pin)} down={int(down_pin)}"
+                    + (f" quit={int(quit_pin)}" if quit_pin is not None else "")
+                    + f" pull_up={pull_up} bounce_sec={bounce_sec}"
+                )
+            except Exception as e:
+                print(f"[gpio] failed to initialize; continuing without GPIO. error={e}")
+                gpio = None
+
     player: MpvPlayer | None = None
     if not args.dry_run:
         player = MpvPlayer(
@@ -96,20 +141,36 @@ def main() -> int:
         if player is not None:
             player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
 
+        def _handle_input_event(evt: InputEvent) -> int | None:
+            if evt.kind == "quit":
+                print("Exiting.")
+                return 0
+            if evt.kind == "channel_up":
+                info = station.channel_up(now_utc())
+                if player is not None:
+                    player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
+            if evt.kind == "channel_down":
+                info = station.channel_down(now_utc())
+                if player is not None:
+                    player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
+            return None
+
         while True:
+            # Drain queued GPIO events (edge callbacks) first.
+            while True:
+                try:
+                    gevt = gpio_q.get_nowait()
+                except Exception:
+                    break
+                rc = _handle_input_event(gevt)
+                if rc is not None:
+                    return rc
+
             evt = inp.poll()
             if evt is not None:
-                if evt.kind == "quit":
-                    print("Exiting.")
-                    return 0
-                if evt.kind == "channel_up":
-                    info = station.channel_up(now_utc())
-                    if player is not None:
-                        player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
-                if evt.kind == "channel_down":
-                    info = station.channel_down(now_utc())
-                    if player is not None:
-                        player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
+                rc = _handle_input_event(evt)
+                if rc is not None:
+                    return rc
 
             # Auto-advance: EOF or virtual schedule rollover.
             if player is not None:
@@ -244,5 +305,10 @@ def main() -> int:
             time.sleep(0.05)
     finally:
         inp.close()
+        if gpio is not None:
+            try:
+                gpio.close()
+            except Exception:
+                pass
         if player is not None:
             player.close()

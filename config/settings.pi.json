@@ -7,5 +7,12 @@
   "end_epsilon_sec": 0.25,
   "call_sign_inset_right_px": 450,
   "call_sign_inset_top_px": 100,
-  "call_sign_duration_sec": 4
+  "call_sign_duration_sec": 4,
+
+  "gpio_enable": false,
+  "gpio_btn_up": 17,
+  "gpio_btn_down": 27,
+  "gpio_btn_quit": 22,
+  "gpio_pull_up": true,
+  "gpio_bounce_sec": 0.05
 }
