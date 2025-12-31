@@ -563,6 +563,36 @@ class MpvPlayer:
         # Use a stable name so supervision / scripts can locate it if needed.
         return f"/tmp/{self.pipe_name}.sock"
 
+    def _kill_existing_mpv_processes(self) -> None:
+        """Best-effort cleanup of any running mpv processes.
+
+        If the app crashes or is force-terminated, mpv may keep running and
+        hold onto the IPC socket/pipe, preventing the next launch.
+        """
+
+        try:
+            if os.name == "nt":
+                # Windows: use taskkill to terminate mpv.exe
+                subprocess.run(
+                    ["taskkill", "/F", "/IM", "mpv.exe"],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=2.0,
+                )
+            else:
+                # Unix/Linux: use pkill to terminate mpv
+                subprocess.run(
+                    ["pkill", "-9", "mpv"],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=2.0,
+                )
+        except Exception:
+            # Best-effort; do not prevent playback if cleanup fails.
+            pass
+
     def _cleanup_stale_ipc_path(self) -> None:
         """Best-effort cleanup of leftover IPC socket on non-Windows.
 
@@ -584,6 +614,9 @@ class MpvPlayer:
     def start(self) -> None:
         if self._proc is not None:
             return
+
+        # Kill any existing mpv processes that might be holding the IPC socket/pipe.
+        self._kill_existing_mpv_processes()
 
         # Non-Windows uses a Unix socket for --input-ipc-server; remove any stale
         # socket path before starting mpv.
