@@ -72,15 +72,6 @@ class MpvIpcClient:
                 self._fh = None
                 last_err = e
                 time.sleep(0.05)
-        
-        # Provide specific guidance for permission errors
-        if last_err and getattr(last_err, 'errno', None) == 13:  # Permission denied
-            raise MpvIpcError(
-                f"Failed to connect to mpv IPC pipe {self.pipe_path!r}: Permission denied.\n"
-                f"This usually means a stale socket file exists from a previous run.\n"
-                f"Try manually removing it: rm {self.pipe_path}"
-            )
-        
         raise MpvIpcError(f"Failed to connect to mpv IPC pipe {self.pipe_path!r}: {last_err}")
 
     def close(self) -> None:
