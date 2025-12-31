@@ -46,6 +46,20 @@ def _parse_args() -> argparse.Namespace:
 def main() -> int:
     args = _parse_args()
 
+    # Set system volume on Linux/Pi startup
+    if os.name != "nt":
+        try:
+            import subprocess
+            subprocess.run(
+                ["amixer", "set", "PCM", "100%", "unmute"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=2
+            )
+        except Exception as e:
+            # Non-critical: continue even if amixer fails
+            print(f"[warning] Could not set volume via amixer: {e}")
+
     # Single-instance lock: prevent multiple instances on Linux/Pi to avoid mpv IPC socket conflicts.
     # On Windows, this is a no-op to preserve existing behavior.
     from lcarstv.core.single_instance import SingleInstanceLock
