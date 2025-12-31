@@ -46,6 +46,14 @@ def _parse_args() -> argparse.Namespace:
 def main() -> int:
     args = _parse_args()
 
+    # Single-instance lock: prevent multiple instances on Linux/Pi to avoid mpv IPC socket conflicts.
+    # On Windows, this is a no-op to preserve existing behavior.
+    from lcarstv.core.single_instance import SingleInstanceLock
+    lock = SingleInstanceLock(enabled=(os.name != "nt"))
+    if not lock.acquire():
+        print("[lcarstv] Another instance is already running. Exiting.")
+        return 1
+
     repo_root = Path(__file__).resolve().parents[1]
 
     settings_path = Path(args.settings).expanduser() if args.settings else None
@@ -312,3 +320,4 @@ def main() -> int:
                 pass
         if player is not None:
             player.close()
+        lock.release()
