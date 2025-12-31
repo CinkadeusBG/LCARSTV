@@ -53,6 +53,9 @@ class MpvPlayer:
     # mpv OSD overlay id reserved for the call-sign.
     _call_sign_overlay_id: int = 4242
 
+    # Active timer for clearing call-sign OSD (prevent thread accumulation).
+    _call_sign_timer: threading.Timer | None = None
+
     # Suppress end-triggers during static burst and immediately after load/seek.
     _guard_until: float = 0.0
     _guard_reason: str | None = None
@@ -160,6 +163,15 @@ class MpvPlayer:
         # Replace the overlay each time (same id).
         self._ipc.command("osd-overlay", self._call_sign_overlay_id, "ass-events", ass_text, timeout_sec=2.0)
 
+        # Cancel any existing timer to prevent thread accumulation.
+        if self._call_sign_timer is not None:
+            try:
+                self._call_sign_timer.cancel()
+            except Exception:
+                # Best-effort: timer may have already completed.
+                pass
+            self._call_sign_timer = None
+
         # Schedule overlay removal after duration.
         self._osd_token += 1
         token = self._osd_token
@@ -175,6 +187,8 @@ class MpvPlayer:
                 pass
             if self.debug:
                 print(f"[debug] osd: cleared call-sign {text}")
+            # Clear the reference after the timer completes.
+            self._call_sign_timer = None
 
         if duration_sec <= 0:
             _clear_and_log()
@@ -182,6 +196,8 @@ class MpvPlayer:
             t = threading.Timer(duration_sec, _clear_and_log)
             t.daemon = True
             t.start()
+            # Store reference so we can cancel it if a new overlay is requested.
+            self._call_sign_timer = t
 
     def _wait_for_media_ready(self, *, timeout_sec: float = 2.0, poll_interval_sec: float = 0.05) -> bool:
         """Wait until mpv has loaded enough metadata that seeking should work.
@@ -722,6 +738,15 @@ class MpvPlayer:
 
     def close(self) -> None:
         # Best-effort shutdown. We don't want threads or complex supervision.
+        
+        # Cancel any outstanding timer to prevent callbacks after shutdown.
+        if self._call_sign_timer is not None:
+            try:
+                self._call_sign_timer.cancel()
+            except Exception:
+                pass
+            self._call_sign_timer = None
+        
         try:
             if self._ipc is not None:
                 try:
