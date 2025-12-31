@@ -721,12 +721,14 @@ class MpvPlayer:
         # On non-Windows, wait for mpv to create the IPC socket before attempting to connect.
         # This avoids a race condition on first launch where the IPC client tries to connect
         # before mpv has bound the socket.
+        # Use a longer timeout (10s) to accommodate slower startup during boot/auto-login scenarios
+        # where the display server and graphics subsystem may still be initializing.
         if os.name != "nt":
             pipe_path_obj = Path(self.pipe_path)
             if self.debug:
                 print(f"[debug] mpv: waiting for IPC socket: {self.pipe_path}")
             
-            socket_exists = _wait_for_path_exists(pipe_path_obj, timeout_sec=2.0, poll_interval_sec=0.02)
+            socket_exists = _wait_for_path_exists(pipe_path_obj, timeout_sec=10.0, poll_interval_sec=0.05)
             
             if not socket_exists:
                 # Socket didn't appear in time. Check if mpv process is still alive.
