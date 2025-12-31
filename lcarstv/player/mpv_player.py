@@ -642,10 +642,31 @@ class MpvPlayer:
         try:
             p = Path(self.pipe_path)
             if p.exists():
-                p.unlink()
-        except Exception:
-            # Best-effort; do not prevent playback.
+                # Verify it's actually a socket before trying to remove it.
+                # Use stat to check the file type.
+                import stat
+                st = p.stat()
+                if stat.S_ISSOCK(st.st_mode):
+                    # It's a socket; safe to remove.
+                    p.unlink()
+                    if self.debug:
+                        print(f"[debug] mpv: cleaned up stale socket: {self.pipe_path}")
+                else:
+                    # Unexpected file type; log but don't remove.
+                    if self.debug:
+                        print(f"[debug] mpv: IPC path exists but is not a socket; skipping cleanup: {self.pipe_path}")
+        except PermissionError:
+            # If we can't access or remove the socket due to permissions, try to proceed anyway.
+            # mpv may be able to handle it, or it may fail cleanly.
+            if self.debug:
+                print(f"[debug] mpv: permission denied cleaning up socket: {self.pipe_path}")
+        except FileNotFoundError:
+            # Socket was already removed between exists() check and unlink(); that's fine.
             pass
+        except Exception as e:
+            # Best-effort; log unexpected issues but don't prevent playback.
+            if self.debug:
+                print(f"[debug] mpv: failed to cleanup socket: {e}")
 
     def start(self) -> None:
         if self._proc is not None:
@@ -721,6 +742,25 @@ class MpvPlayer:
                         f"mpv process is running (PID={self._proc.pid}) but socket not ready after 2s."
                     )
                 raise MpvIpcError(err_msg)
+            
+            # Socket file exists, but mpv may not have finished binding to it yet.
+            # Verify it's actually a socket and add a grace period.
+            try:
+                import stat
+                st = pipe_path_obj.stat()
+                if not stat.S_ISSOCK(st.st_mode):
+                    raise MpvIpcError(
+                        f"IPC path '{self.pipe_path}' exists but is not a socket. "
+                        f"This may indicate a configuration or filesystem issue."
+                    )
+            except OSError as e:
+                if self.debug:
+                    print(f"[debug] mpv: warning - could not verify socket type: {e}")
+                # Continue anyway; connection attempt will fail if there's a real problem.
+            
+            # Add a small grace period to ensure mpv is fully ready to accept connections.
+            # This prevents "Permission denied" errors during connection attempts.
+            time.sleep(0.1)
             
             if self.debug:
                 print("[debug] mpv: IPC socket ready")

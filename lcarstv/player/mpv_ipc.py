@@ -36,6 +36,7 @@ class MpvIpcClient:
     def connect(self, *, timeout_sec: float = 2.0) -> None:
         deadline = time.time() + timeout_sec
         last_err: Exception | None = None
+        retry_count = 0
         while time.time() < deadline:
             try:
                 # mpv expects line-delimited JSON.
@@ -71,16 +72,29 @@ class MpvIpcClient:
                 self._sock = None
                 self._fh = None
                 last_err = e
-                time.sleep(0.05)
+                retry_count += 1
+                
+                # Use exponential backoff for retries to handle transient errors.
+                # Permission denied (errno 13) and Connection refused (errno 111) are common
+                # when mpv hasn't fully initialized the socket yet.
+                if retry_count <= 3:
+                    # Fast retries for the first few attempts
+                    time.sleep(0.05)
+                elif retry_count <= 10:
+                    # Medium backoff
+                    time.sleep(0.1)
+                else:
+                    # Longer backoff for persistent issues
+                    time.sleep(0.2)
         
         # Provide a helpful error message with troubleshooting hints
         err_msg = (
-            f"Failed to connect to mpv IPC pipe '{self.pipe_path}' after {timeout_sec}s. "
+            f"Failed to connect to mpv IPC pipe '{self.pipe_path}' after {timeout_sec}s ({retry_count} attempts). "
             f"Last error: {last_err}. "
         )
         if os.name != "nt":
             err_msg += (
-                "Hint: On Linux/Pi, mpv may not have created the socket yet. "
+                "Hint: On Linux/Pi, mpv may not have created the socket yet or it may have incorrect permissions. "
                 "Ensure mpv is running with --input-ipc-server."
             )
         raise MpvIpcError(err_msg)
