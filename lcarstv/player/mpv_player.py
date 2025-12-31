@@ -544,8 +544,9 @@ class MpvPlayer:
         if os.name == "nt":
             return rf"\\.\pipe\{self.pipe_name}"
         # Linux/Pi: mpv expects a Unix domain socket path.
-        # Use a stable name so supervision / scripts can locate it if needed.
-        return f"/tmp/{self.pipe_name}.sock"
+        # Include user ID to prevent permission conflicts between users.
+        uid = os.getuid()
+        return f"/tmp/{self.pipe_name}-{uid}.sock"
 
     def _cleanup_stale_ipc_path(self) -> None:
         """Best-effort cleanup of leftover IPC socket on non-Windows.
@@ -560,10 +561,18 @@ class MpvPlayer:
         try:
             p = Path(self.pipe_path)
             if p.exists():
+                if self.debug:
+                    print(f"[debug] mpv: removing stale IPC socket: {self.pipe_path}")
                 p.unlink()
-        except Exception:
-            # Best-effort; do not prevent playback.
-            pass
+        except PermissionError as e:
+            # Log permission errors explicitly - these are the most common issues.
+            print(f"[warning] mpv: cannot remove stale IPC socket due to permissions: {self.pipe_path}")
+            print(f"[warning] mpv: please manually remove the socket file: rm {self.pipe_path}")
+            print(f"[warning] mpv: error: {e}")
+        except Exception as e:
+            # Other errors: log but don't prevent playback.
+            if self.debug:
+                print(f"[debug] mpv: failed to cleanup IPC socket: {e}")
 
     def start(self) -> None:
         if self._proc is not None:
