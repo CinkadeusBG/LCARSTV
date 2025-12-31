@@ -1,7 +1,14 @@
 {
-  "channel_order": ["WTNG", "KDSN", "KVOY", "WMOV"],
+  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV"],
 
   "channels": [
+    {
+      "call_sign": "KTOS",
+      "label": "Star Trek: The Original Series",
+      "media_dirs": ["Z:/media/KTOS"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "cooldown": 10
+    },
     {
       "call_sign": "WTNG",
       "label": "Star Trek: The Next Generation",
