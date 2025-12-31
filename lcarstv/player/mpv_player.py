@@ -6,8 +6,44 @@ from pathlib import Path
 import subprocess
 from dataclasses import dataclass
 import threading
+from typing import Callable
 
 from .mpv_ipc import MpvIpcClient, MpvIpcError
+
+
+def _wait_for_path_exists(
+    path: Path,
+    *,
+    timeout_sec: float = 2.0,
+    poll_interval_sec: float = 0.02,
+    exists_fn: Callable[[Path], bool] | None = None,
+    time_fn: Callable[[], float] | None = None,
+) -> bool:
+    """Wait for a filesystem path to exist, with timeout.
+
+    Returns True if the path exists within the timeout, False otherwise.
+
+    Args:
+        path: The path to wait for.
+        timeout_sec: Maximum time to wait (seconds).
+        poll_interval_sec: How often to check for existence.
+        exists_fn: Override for path.exists() (for testing).
+        time_fn: Override for time.time() (for testing).
+    """
+    if exists_fn is None:
+        def exists_fn(p: Path) -> bool:
+            return p.exists()
+    if time_fn is None:
+        time_fn = time.time
+
+    deadline = time_fn() + float(timeout_sec)
+    while time_fn() < deadline:
+        if exists_fn(path):
+            return True
+        time.sleep(max(0.0, float(poll_interval_sec)))
+
+    # Final check at deadline
+    return exists_fn(path)
 
 
 @dataclass
@@ -660,6 +696,34 @@ class MpvPlayer:
             stderr=subprocess.DEVNULL,
             text=True,
         )
+
+        # On non-Windows, wait for mpv to create the IPC socket before attempting to connect.
+        # This avoids a race condition on first launch where the IPC client tries to connect
+        # before mpv has bound the socket.
+        if os.name != "nt":
+            pipe_path_obj = Path(self.pipe_path)
+            if self.debug:
+                print(f"[debug] mpv: waiting for IPC socket: {self.pipe_path}")
+            
+            socket_exists = _wait_for_path_exists(pipe_path_obj, timeout_sec=2.0, poll_interval_sec=0.02)
+            
+            if not socket_exists:
+                # Socket didn't appear in time. Check if mpv process is still alive.
+                proc_status = self._proc.poll()
+                if proc_status is not None:
+                    err_msg = (
+                        f"mpv process exited (code={proc_status}) before creating IPC socket '{self.pipe_path}'. "
+                        f"Check mpv installation and logs."
+                    )
+                else:
+                    err_msg = (
+                        f"Timed out waiting for mpv to create IPC socket '{self.pipe_path}'. "
+                        f"mpv process is running (PID={self._proc.pid}) but socket not ready after 2s."
+                    )
+                raise MpvIpcError(err_msg)
+            
+            if self.debug:
+                print("[debug] mpv: IPC socket ready")
 
         self._ipc = MpvIpcClient(pipe_path=self.pipe_path, debug=self.debug, trace=self.ipc_trace)
         self._ipc.connect(timeout_sec=3.0)

@@ -15,7 +15,7 @@ class MpvIpcError(RuntimeError):
 
 @dataclass
 class MpvIpcClient:
-    """Minimal mpv JSON IPC client.
+    r"""Minimal mpv JSON IPC client.
 
     Transport:
     - Windows: named pipe path like: \\.\pipe\lcarstv-mpv
@@ -72,7 +72,18 @@ class MpvIpcClient:
                 self._fh = None
                 last_err = e
                 time.sleep(0.05)
-        raise MpvIpcError(f"Failed to connect to mpv IPC pipe {self.pipe_path!r}: {last_err}")
+        
+        # Provide a helpful error message with troubleshooting hints
+        err_msg = (
+            f"Failed to connect to mpv IPC pipe '{self.pipe_path}' after {timeout_sec}s. "
+            f"Last error: {last_err}. "
+        )
+        if os.name != "nt":
+            err_msg += (
+                "Hint: On Linux/Pi, mpv may not have created the socket yet. "
+                "Ensure mpv is running with --input-ipc-server."
+            )
+        raise MpvIpcError(err_msg)
 
     def close(self) -> None:
         if self._fh is not None:
