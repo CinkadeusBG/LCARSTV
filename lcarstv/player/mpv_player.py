@@ -266,11 +266,12 @@ class MpvPlayer:
         return False
 
     # --- Best-effort property helpers (never raise) ---
-    def _get_property(self, name: str, *, timeout_sec: float = 1.0) -> dict:
+    def _get_property(self, name: str, *, timeout_sec: float = 0.5) -> dict:
         if self._ipc is None:
             return {"error": "no-ipc", "data": None}
         try:
             # Property polling should be quiet; IPC trace is for high-signal events.
+            # Reduced timeout from 1.0s to 0.5s to recover faster from transient delays.
             return self._ipc.command("get_property", name, timeout_sec=timeout_sec)
         except Exception:
             return {"error": "exception", "data": None}

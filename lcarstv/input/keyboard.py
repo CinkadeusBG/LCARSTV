@@ -25,6 +25,7 @@ class KeyboardInput:
     _posix_fd: int | None = None
     _posix_old_termios: list[int] | None = None
     _posix_buf: bytearray = field(default_factory=bytearray)
+    _posix_buf_max_size: int = 128  # Prevent unbounded growth
 
     def __post_init__(self) -> None:
         if os.name == "nt":
@@ -106,6 +107,11 @@ class KeyboardInput:
             return None
 
         self._posix_buf.extend(data)
+
+        # Defensive: prevent unbounded buffer growth from unrecognized sequences.
+        # Keep only the most recent bytes if buffer exceeds max size.
+        if len(self._posix_buf) > self._posix_buf_max_size:
+            self._posix_buf = self._posix_buf[-self._posix_buf_max_size:]
 
         # Parse buffer for known sequences.
         # Common escape sequences:

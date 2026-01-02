@@ -144,7 +144,9 @@ def main() -> int:
         )
 
     # Throttle auto-advance polling (keep low CPU / low IPC spam).
+    # Increased from 0.2s to 0.4s to reduce IPC overhead during long-running sessions.
     last_auto_poll = 0.0
+    auto_poll_interval = 0.4
     last_auto_advanced_from: str | None = None
 
     def _norm_path(p: str | None) -> str | None:
@@ -198,7 +200,7 @@ def main() -> int:
             if player is not None:
                 now = now_utc()
                 t = time.time()
-                if t - last_auto_poll >= 0.2:
+                if t - last_auto_poll >= auto_poll_interval:
                     last_auto_poll = t
 
                     # If we just advanced, suppress additional triggers until mpv
