@@ -287,7 +287,7 @@ def main() -> int:
                                 )
 
                             last_auto_advanced_from = old_file
-                            player.play(info.current_file, info.position_sec, call_sign=info.call_sign)
+                            player.play(info.current_file, info.position_sec)
 
                             # Suppress re-triggers while mpv transitions.
                             suppress_until_time = time.time() + 0.5
@@ -301,7 +301,7 @@ def main() -> int:
                                 f"[debug] within-block switch reason=SCHEDULE call_sign={station.active_call_sign} block_id={active_chan.state.current_block_id} {Path(current_media).name} -> {Path(expected_file).name} offset={expected_pos:.2f}"
                             )
 
-                        player.play(expected_file, expected_pos, call_sign=station.active_call_sign)
+                        player.play(expected_file, expected_pos)
 
                         # Suppress retriggers while mpv transitions.
                         suppress_until_time = time.time() + 0.5
@@ -317,7 +317,7 @@ def main() -> int:
                                 f"[debug] correct reason={mpv_reason} call_sign={station.active_call_sign} block_id={active_chan.state.current_block_id} current_file={expected_file} position_sec={expected_pos:.2f}"
                             )
 
-                        player.play(expected_file, expected_pos, call_sign=station.active_call_sign)
+                        player.play(expected_file, expected_pos)
 
                         # Suppress retriggers while mpv transitions back.
                         suppress_until_time = time.time() + 0.5

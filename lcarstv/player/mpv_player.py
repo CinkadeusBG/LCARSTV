@@ -194,7 +194,7 @@ class MpvPlayer:
             y = max(0, min(int(osd_h), inset_t))
             pos_tag = rf"\pos({x},{y})"
 
-        ass_text = rf"{{\an9{pos_tag}\fnConsolas\fs{font_size}\1c&H00FF00&\bord{outline_px}\3c&H000000&\shad0}}{text}"
+        ass_text = rf"{{\an9{pos_tag}\fs{font_size}\1c&H00FF00&\bord{outline_px}\3c&H000000&\shad0}}{text}"
 
         # Replace the overlay each time (same id).
         self._ipc.command("osd-overlay", self._call_sign_overlay_id, "ass-events", ass_text, timeout_sec=2.0)
