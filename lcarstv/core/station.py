@@ -249,6 +249,7 @@ class Station:
                 store=store,
                 state=state,
                 durations=durations,
+                sequential_playthrough=ch.sequential_playthrough,
             )
 
         call_signs = channels_cfg.ordered_call_signs()

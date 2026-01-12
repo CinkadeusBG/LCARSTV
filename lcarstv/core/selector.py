@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import random
+import re
 import copy
 import threading
 from dataclasses import dataclass, field
@@ -20,6 +21,53 @@ def _seed_for(call_sign: str, *, bag_epoch: int, items_fp: str) -> int:
     raw = f"{call_sign}:{bag_epoch}:{items_fp}".encode("utf-8")
     # 64-bit seed
     return int.from_bytes(hashlib.sha256(raw).digest()[:8], "big", signed=False)
+
+
+def _parse_episode_info(item_id: str) -> tuple[int, int] | None:
+    """Parse SxxExx pattern from item ID (typically a file path).
+    
+    Returns (season, episode) tuple or None if pattern not found.
+    """
+    # Extract filename from path-like strings
+    filename = Path(item_id).name if "/" in item_id or "\\" in item_id else item_id
+    
+    # Match patterns like S01E05, s02e12, etc.
+    match = re.search(r'[Ss](\d+)[Ee](\d+)', filename)
+    if match:
+        season = int(match.group(1))
+        episode = int(match.group(2))
+        return (season, episode)
+    return None
+
+
+def _sort_items_sequentially(items: tuple[str, ...]) -> list[str]:
+    """Sort items by season/episode number, falling back to alphabetical for items without SxxExx.
+    
+    Items with episode info are sorted first by season then episode.
+    Items without episode info are sorted alphabetically and placed at the end.
+    """
+    items_with_ep: list[tuple[str, int, int]] = []
+    items_without_ep: list[str] = []
+    
+    for item in items:
+        ep_info = _parse_episode_info(item)
+        if ep_info:
+            season, episode = ep_info
+            items_with_ep.append((item, season, episode))
+        else:
+            items_without_ep.append(item)
+    
+    # Sort items with episode info by (season, episode)
+    items_with_ep.sort(key=lambda x: (x[1], x[2]))
+    
+    # Sort items without episode info alphabetically
+    items_without_ep.sort(key=lambda x: str(x).lower())
+    
+    # Combine: episodic content first, then non-episodic
+    result = [item for item, _, _ in items_with_ep]
+    result.extend(items_without_ep)
+    
+    return result
 
 
 @dataclass
@@ -138,6 +186,48 @@ class SmartRandomSelector:
             if persist and save:
                 self.store.save(self.state)
 
+    def pick_next_sequential(
+        self,
+        *,
+        call_sign: str,
+        items: tuple[str, ...],
+        persist: bool = True,
+        save: bool = True,
+    ) -> str:
+        """Pick the next item in sequential order (S01E01, S01E02, etc.).
+        
+        Uses sequential_index to track position in the sorted list.
+        Wraps back to start when reaching the end.
+        """
+        if not items:
+            raise ValueError("items must be non-empty")
+        
+        cs = call_sign.strip().upper()
+        ch = self._get_channel_ref(cs, persist=persist)
+        
+        # Sort items sequentially
+        sorted_items = _sort_items_sequentially(items)
+        
+        # Clamp index to valid range
+        if ch.sequential_index < 0 or ch.sequential_index >= len(sorted_items):
+            ch.sequential_index = 0
+        
+        # Select current item
+        selected = sorted_items[ch.sequential_index]
+        
+        # Advance to next item (wrap around at end)
+        ch.sequential_index = (ch.sequential_index + 1) % len(sorted_items)
+        
+        if persist and save:
+            self.store.save(self.state)
+        
+        if self.debug and persist and save:
+            print(
+                f"[debug] {cs} sequential: selected={selected} next_index={ch.sequential_index}/{len(sorted_items)}"
+            )
+        
+        return str(selected)
+
     def pick_next(
         self,
         *,
@@ -147,15 +237,28 @@ class SmartRandomSelector:
         current_item: str | None,
         persist: bool = True,
         save: bool = True,
+        sequential: bool = False,
     ) -> str:
         """Pick the next item to air.
 
+        If sequential=True, picks items in order (S01E01, S01E02, etc.).
+        Otherwise uses shuffle-bag with cooldown.
+        
         Hard rule: avoid immediate repeat.
         Soft rule: avoid last N (cooldown) via recent queue.
         """
 
         if not items:
             raise ValueError("items must be non-empty")
+        
+        # Route to sequential mode if enabled
+        if sequential:
+            return self.pick_next_sequential(
+                call_sign=call_sign,
+                items=items,
+                persist=persist,
+                save=save,
+            )
 
         cs = call_sign.strip().upper()
         self.ensure_initialized(cs, items, persist=persist, save=save)

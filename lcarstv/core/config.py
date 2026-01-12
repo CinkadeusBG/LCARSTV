@@ -58,6 +58,7 @@ class ChannelConfig:
     media_dirs: tuple[Path, ...]
     cooldown: int | None
     blocks: tuple[BlockConfig, ...] = ()
+    sequential_playthrough: bool = False
 
 
 @dataclass(frozen=True)
@@ -118,8 +119,16 @@ def load_channels_config(path: Path) -> ChannelsConfig:
                 raise ValueError(f"{call_sign}: block {bid!r} requires non-empty files")
             blocks_cfg.append(BlockConfig(id=bid, files=files))
 
+        sequential_playthrough = bool(ch.get("sequential_playthrough", False))
+
         chans.append(
-            ChannelConfig(call_sign=call_sign, media_dirs=media_dirs, cooldown=cooldown, blocks=tuple(blocks_cfg))
+            ChannelConfig(
+                call_sign=call_sign,
+                media_dirs=media_dirs,
+                cooldown=cooldown,
+                blocks=tuple(blocks_cfg),
+                sequential_playthrough=sequential_playthrough,
+            )
         )
     if not chans:
         raise ValueError("channels.json has no channels")

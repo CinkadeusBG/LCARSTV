@@ -26,6 +26,9 @@ class PersistedChannel:
     recent: list[str] | None = None
     last_played: str | None = None
     bag_epoch: int = 0
+    
+    # Sequential playthrough state
+    sequential_index: int = 0
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "PersistedChannel":
@@ -40,6 +43,7 @@ class PersistedChannel:
             recent=list(d.get("recent", [])) if d.get("recent") is not None else None,
             last_played=d.get("last_played"),
             bag_epoch=int(d.get("bag_epoch", 0) or 0),
+            sequential_index=int(d.get("sequential_index", 0) or 0),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -52,6 +56,7 @@ class PersistedChannel:
             "recent": list(self.recent or []),
             "last_played": self.last_played,
             "bag_epoch": int(self.bag_epoch),
+            "sequential_index": int(self.sequential_index),
         }
 
 

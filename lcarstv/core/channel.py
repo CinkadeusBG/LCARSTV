@@ -23,6 +23,7 @@ class ChannelRuntime:
     store: StateStore
     state: ChannelState
     durations: DurationCache
+    sequential_playthrough: bool = False
 
     def get_current_block(self) -> Block:
         if self.state.current_block_id not in self.blocks_by_id:
@@ -135,6 +136,7 @@ class ChannelRuntime:
                 persist=persist,
                 # We persist scheduler+live state as a single write below.
                 save=False,
+                sequential=self.sequential_playthrough,
             )
             self.state.current_block_id = str(next_block_id)
 
