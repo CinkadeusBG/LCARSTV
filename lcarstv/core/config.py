@@ -59,6 +59,7 @@ class ChannelConfig:
     cooldown: int | None
     blocks: tuple[BlockConfig, ...] = ()
     sequential_playthrough: bool = False
+    aggregate_from_channels: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -120,6 +121,21 @@ def load_channels_config(path: Path) -> ChannelsConfig:
             blocks_cfg.append(BlockConfig(id=bid, files=files))
 
         sequential_playthrough = bool(ch.get("sequential_playthrough", False))
+        
+        # Aggregate channel support
+        aggregate_from_raw = ch.get("aggregate_from_channels")
+        aggregate_from_channels: tuple[str, ...] | None = None
+        if aggregate_from_raw is not None:
+            aggregate_from_channels = tuple(str(x).strip().upper() for x in aggregate_from_raw)
+        
+        # Validation: aggregate channels should not have media_dirs
+        if aggregate_from_channels is not None:
+            if media_dirs:
+                raise ValueError(f"{call_sign}: aggregate channels cannot have media_dirs")
+        else:
+            # Non-aggregate channels must have media_dirs
+            if not media_dirs:
+                raise ValueError(f"{call_sign}: non-aggregate channels must have media_dirs")
 
         chans.append(
             ChannelConfig(
@@ -128,6 +144,7 @@ def load_channels_config(path: Path) -> ChannelsConfig:
                 cooldown=cooldown,
                 blocks=tuple(blocks_cfg),
                 sequential_playthrough=sequential_playthrough,
+                aggregate_from_channels=aggregate_from_channels,
             )
         )
     if not chans:

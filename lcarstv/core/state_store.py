@@ -29,6 +29,11 @@ class PersistedChannel:
     
     # Sequential playthrough state
     sequential_index: int = 0
+    
+    # Aggregate channel state
+    aggregate_set: list[str] | None = None
+    aggregate_set_index: int = 0
+    aggregate_source_states: dict[str, dict[str, Any]] | None = None
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "PersistedChannel":
@@ -44,6 +49,9 @@ class PersistedChannel:
             last_played=d.get("last_played"),
             bag_epoch=int(d.get("bag_epoch", 0) or 0),
             sequential_index=int(d.get("sequential_index", 0) or 0),
+            aggregate_set=list(d.get("aggregate_set", [])) if d.get("aggregate_set") is not None else None,
+            aggregate_set_index=int(d.get("aggregate_set_index", 0) or 0),
+            aggregate_source_states=dict(d.get("aggregate_source_states", {})) if d.get("aggregate_source_states") is not None else None,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -57,6 +65,9 @@ class PersistedChannel:
             "last_played": self.last_played,
             "bag_epoch": int(self.bag_epoch),
             "sequential_index": int(self.sequential_index),
+            "aggregate_set": list(self.aggregate_set or []) if self.aggregate_set is not None else None,
+            "aggregate_set_index": int(self.aggregate_set_index),
+            "aggregate_source_states": dict(self.aggregate_source_states or {}) if self.aggregate_source_states is not None else None,
         }
 
 

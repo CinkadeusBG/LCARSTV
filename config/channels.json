@@ -1,5 +1,5 @@
 {
-  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV"],
+  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV", "WMIX"],
 
   "channels": [
     {
@@ -38,6 +38,12 @@
       "media_dirs": ["Z:/media/WMOV"],
       "extensions": [".mkv", ".mp4", ".avi"],
       "cooldown": 3
+    },
+    {
+      "call_sign": "WMIX",
+      "label": "All Trek Mix",
+      "aggregate_from_channels": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV"],
+      "cooldown": 0
     }
   ]
 }
