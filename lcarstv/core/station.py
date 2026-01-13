@@ -91,7 +91,13 @@ class Station:
         persisted = store.load()
         selector = SmartRandomSelector(store=store, state=persisted, debug=settings.debug)
         channels: dict[str, ChannelRuntime] = {}
-        for ch in channels_cfg.channels:
+        
+        # Process normal channels first, then aggregate channels
+        normal_channels = [ch for ch in channels_cfg.channels if ch.aggregate_from_channels is None]
+        aggregate_channels = [ch for ch in channels_cfg.channels if ch.aggregate_from_channels is not None]
+        
+        # Build normal channels
+        for ch in normal_channels:
             scan = scan_media_dirs(repo_root, ch.media_dirs, settings.extensions)
             if not scan.files:
                 # Keep deterministic, but allow boot without media present.
@@ -249,6 +255,132 @@ class Station:
                 store=store,
                 state=state,
                 durations=durations,
+                sequential_playthrough=ch.sequential_playthrough,
+            )
+        
+        # Build aggregate channels
+        for ch in aggregate_channels:
+            assert ch.aggregate_from_channels is not None
+            
+            # Validate that all source channels exist
+            for source_cs in ch.aggregate_from_channels:
+                if source_cs not in channels:
+                    raise ValueError(
+                        f"{ch.call_sign}: aggregate source channel {source_cs!r} does not exist. "
+                        f"Aggregate channels must be defined after their sources in channels.json."
+                    )
+            
+            # Collect blocks and metadata from all source channels
+            aggregate_blocks_by_id: dict[str, Block] = {}
+            aggregate_source_infos: dict[str, dict] = {}
+            
+            for source_cs in ch.aggregate_from_channels:
+                source_chan = channels[source_cs]
+                
+                # Add all blocks from this source to the aggregate's block pool
+                for block_id, block in source_chan.blocks_by_id.items():
+                    aggregate_blocks_by_id[block_id] = block
+                
+                # Store source metadata for the selector
+                aggregate_source_infos[source_cs] = {
+                    "eligible_block_ids": source_chan.eligible_block_ids,
+                    "is_sequential": source_chan.sequential_playthrough,
+                    "cooldown": source_chan.cooldown,
+                }
+            
+            if not aggregate_blocks_by_id:
+                raise ValueError(f"{ch.call_sign}: aggregate channel has no blocks from any source")
+            
+            # Aggregate channels don't have their own eligible list - they pull from sources dynamically
+            # But we need a combined list for get_current_block() to work
+            aggregate_eligible = tuple(aggregate_blocks_by_id.keys())
+            
+            cooldown = int(ch.cooldown) if ch.cooldown is not None else 0
+            
+            # Restore or initialize aggregate channel state
+            persisted_ch = selector.state.channels.get(ch.call_sign)
+            if persisted_ch is None:
+                selector.state.channels[ch.call_sign] = PersistedChannel()
+                persisted_ch = selector.state.channels[ch.call_sign]
+            
+            # Initialize aggregate-specific state if needed
+            if persisted_ch.aggregate_set is None:
+                persisted_ch.aggregate_set = []
+            if persisted_ch.aggregate_set_index is None:
+                persisted_ch.aggregate_set_index = 0
+            if persisted_ch.aggregate_source_states is None:
+                persisted_ch.aggregate_source_states = {}
+            
+            def clamp_started_at(s: datetime | None) -> datetime | None:
+                if s is None:
+                    return None
+                return s if s <= now else now
+            
+            restored_started = clamp_started_at(persisted_ch.started_at)
+            
+            # Restore or initialize current block
+            current_block_id: str | None = None
+            started_at: datetime | None = restored_started
+            
+            if persisted_ch.current_block_id and persisted_ch.current_block_id in aggregate_blocks_by_id:
+                current_block_id = persisted_ch.current_block_id
+            
+            # If we don't have a valid block, pick one using aggregate logic
+            if current_block_id is None or started_at is None:
+                current_block_id = selector.pick_next_aggregate(
+                    call_sign=ch.call_sign,
+                    source_infos=aggregate_source_infos,
+                    persist=True,
+                    save=False,
+                )
+                block = aggregate_blocks_by_id[current_block_id]
+                
+                dur = max(1.0, float(block.total_duration_sec))
+                offset = random.random() * dur
+                started_at = now - timedelta(seconds=offset)
+                
+                if settings.debug:
+                    pb = compute_block_playback(block=block, started_at=started_at, now=now)
+                    print(
+                        f"[debug] {ch.call_sign} aggregate init: block={display_block_id(current_block_id)} started_at={started_at.isoformat()} offset={offset:.2f}s file={pb.file_path.name} file_offset={pb.file_offset_sec:.2f}s"
+                    )
+                
+                # Persist initial state
+                pch = selector.state.channels.get(ch.call_sign)
+                if pch is not None:
+                    pch.current_block_id = current_block_id
+                    pch.current_file = None
+                    pch.started_at = started_at
+                    store.save(selector.state)
+            else:
+                # Persist restored state
+                pch = selector.state.channels.get(ch.call_sign)
+                if pch is not None:
+                    pch.current_block_id = current_block_id
+                    pch.current_file = None
+                    pch.started_at = started_at
+                    store.save(selector.state)
+                
+                if settings.debug:
+                    print(
+                        f"[debug] {ch.call_sign} aggregate restore: block={display_block_id(current_block_id)} started_at={started_at.isoformat()}"
+                    )
+            
+            assert started_at is not None
+            state = ChannelState(call_sign=ch.call_sign, current_block_id=current_block_id, started_at=started_at)
+            channels[ch.call_sign] = ChannelRuntime(
+                call_sign=ch.call_sign,
+                blocks_by_id=aggregate_blocks_by_id,
+                eligible_block_ids=aggregate_eligible,
+                settings=settings,
+                cooldown=cooldown,
+                selector=selector,
+                store=store,
+                state=state,
+                durations=durations,
+                sequential_playthrough=False,  # Aggregate channels don't use sequential mode directly
+                is_aggregate=True,
+                aggregate_source_infos=aggregate_source_infos,
             )
 
         call_signs = channels_cfg.ordered_call_signs()

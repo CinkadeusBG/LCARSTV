@@ -23,6 +23,9 @@ class ChannelRuntime:
     store: StateStore
     state: ChannelState
     durations: DurationCache
+    sequential_playthrough: bool = False
+    is_aggregate: bool = False
+    aggregate_source_infos: dict[str, dict] | None = None
 
     def get_current_block(self) -> Block:
         if self.state.current_block_id not in self.blocks_by_id:
@@ -127,15 +130,26 @@ class ChannelRuntime:
                 self.state.started_at = now
 
             # Advance to next block.
-            next_block_id = self.selector.pick_next(
-                call_sign=self.call_sign,
-                items=self.eligible_block_ids,
-                cooldown=self.cooldown,
-                current_item=old_block,
-                persist=persist,
-                # We persist scheduler+live state as a single write below.
-                save=False,
-            )
+            if self.is_aggregate:
+                # Aggregate channel: pick from sources
+                next_block_id = self.selector.pick_next_aggregate(
+                    call_sign=self.call_sign,
+                    source_infos=self.aggregate_source_infos or {},
+                    persist=persist,
+                    save=False,
+                )
+            else:
+                # Normal channel: pick from own eligible blocks
+                next_block_id = self.selector.pick_next(
+                    call_sign=self.call_sign,
+                    items=self.eligible_block_ids,
+                    cooldown=self.cooldown,
+                    current_item=old_block,
+                    persist=persist,
+                    # We persist scheduler+live state as a single write below.
+                    save=False,
+                    sequential=self.sequential_playthrough,
+                )
             self.state.current_block_id = str(next_block_id)
 
             persisted = self._persist_live_state_if(persist=persist)
