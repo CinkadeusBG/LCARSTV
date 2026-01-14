@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -200,3 +201,73 @@ def display_block_id(block_id: str) -> str:
         except Exception:
             return block_id
     return block_id
+
+
+def load_episode_metadata(episode_path: Path) -> dict | None:
+    """Load commercial break metadata for an episode from its sidecar JSON file.
+    
+    Looks for a .json file with the same basename as the episode file.
+    Expected format:
+    {
+        "version": 1,
+        "breaks": [
+            {"start": <seconds>, "end": <seconds>},
+            ...
+        ]
+    }
+    
+    Args:
+        episode_path: Path to the episode media file
+    
+    Returns:
+        Parsed metadata dict if file exists and is valid, None otherwise
+    
+    Notes:
+    - Never throws exceptions (returns None on any error)
+    - Missing metadata is NOT an error
+    - Malformed metadata is silently ignored
+    """
+    try:
+        # Look for sidecar JSON file
+        json_path = episode_path.with_suffix(".json")
+        
+        if not json_path.exists():
+            return None
+        
+        if not json_path.is_file():
+            return None
+        
+        # Read and parse JSON
+        content = json_path.read_text(encoding="utf-8")
+        metadata = json.loads(content)
+        
+        # Basic validation: must be a dict with "breaks" key
+        if not isinstance(metadata, dict):
+            return None
+        
+        if "breaks" not in metadata:
+            return None
+        
+        breaks = metadata.get("breaks")
+        if not isinstance(breaks, list):
+            return None
+        
+        # Validate each break window
+        for brk in breaks:
+            if not isinstance(brk, dict):
+                return None
+            if "start" not in brk or "end" not in brk:
+                return None
+            # Ensure start/end are numeric
+            try:
+                float(brk["start"])
+                float(brk["end"])
+            except (TypeError, ValueError):
+                return None
+        
+        # Metadata looks valid
+        return metadata
+    
+    except Exception:
+        # Best-effort: any error means "no metadata"
+        return None

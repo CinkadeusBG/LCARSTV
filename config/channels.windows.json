@@ -14,6 +14,7 @@
       "label": "Star Trek: The Next Generation",
       "media_dirs": ["Z:/media/WTNG"],
       "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
       "cooldown": 10
     },
     {
