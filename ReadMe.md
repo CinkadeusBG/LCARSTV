@@ -60,3 +60,26 @@ IPC transport used for control:
 
 If mpv or the app crashes on Linux, a stale `/tmp/lcarstv-mpv.sock` can prevent the next start;
 LCARSTV will best-effort delete it before launching mpv.
+
+## Commercial Break Metadata Generator (optional)
+
+LCARSTV includes a standalone tool to generate commercial break metadata for your video files.
+
+This tool scans video files for fade-to-black + silence patterns and creates `.json` metadata files next to each video with commercial break timestamps.
+
+**Usage:**
+
+```powershell
+python -m lcarstv_tools.generate_metadata --path "Z:\media\WTNG"
+```
+
+**Features:**
+- Detects commercial breaks using FFmpeg blackdetect + silencedetect filters
+- Generates JSON metadata files (same directory as video files)
+- Configurable detection thresholds and parameters
+- Dry-run mode for testing
+- Does **not** modify existing LCARSTV playback logic
+
+**Documentation:** See [docs/METADATA_GENERATOR.md](docs/METADATA_GENERATOR.md) for full usage guide, parameter tuning, and examples.
+
+**Requirements:** FFmpeg and FFprobe must be installed and in your system PATH.
