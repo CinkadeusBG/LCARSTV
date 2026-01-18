@@ -174,20 +174,23 @@ def main() -> int:
     handled_break_indices: set[int] = set()
     in_commercial_break: bool = False
     
-    def _play_commercials(count: int = 3) -> None:
+    def _play_commercials(count: int = 3) -> InputEvent | None:
         """Play a sequence of random commercials.
         
         Args:
             count: Number of commercials to play (default: 3)
+        
+        Returns:
+            InputEvent if interrupted by user, None if completed normally
         """
         if player is None:
-            return
+            return None
         
         commercials = commercial_pool.pick_random(count=count)
         if not commercials:
             if settings.debug:
                 print("[debug] commercials: no commercials available to play")
-            return
+            return None
         
         if settings.debug:
             print(f"[debug] commercials: playing {len(commercials)} commercial(s)")
@@ -205,6 +208,23 @@ def main() -> int:
             start_wait = time.time()
             
             while True:
+                # Check for user input during commercial playback (allow interruption)
+                while True:
+                    try:
+                        gevt = gpio_q.get_nowait()
+                        if gevt.kind in ("quit", "channel_up", "channel_down"):
+                            if settings.debug:
+                                print(f"[debug] commercials: interrupted by {gevt.kind}")
+                            return gevt
+                    except Exception:
+                        break
+                
+                evt = inp.poll()
+                if evt is not None and evt.kind in ("quit", "channel_up", "channel_down"):
+                    if settings.debug:
+                        print(f"[debug] commercials: interrupted by {evt.kind}")
+                    return evt
+                
                 if time.time() - start_wait > max_wait_time:
                     if settings.debug:
                         print(f"[debug] commercials: timeout waiting for commercial to finish")
@@ -219,6 +239,8 @@ def main() -> int:
                     break
                 
                 time.sleep(0.05)
+        
+        return None
     
     def _check_and_handle_breaks() -> bool:
         """Check if we need to interrupt playback for an in-episode commercial break.
@@ -248,6 +270,9 @@ def main() -> int:
         
         current_media_norm = _norm_path(current_media)
         
+        # Get current playback position (needed for both new episode detection and break checking)
+        time_pos = player._get_float_property("time-pos")
+        
         # Check if we switched to a new episode
         if current_episode_path != current_media_norm:
             # New episode: load metadata and reset break tracking
@@ -255,10 +280,21 @@ def main() -> int:
             episode_metadata = load_episode_metadata(Path(current_media))
             handled_break_indices = set()
             
+            # Mark breaks that are already past as handled (prevent retroactive triggers when tuning mid-episode)
+            if episode_metadata is not None and time_pos is not None:
+                breaks = episode_metadata.get("breaks", [])
+                for i, brk in enumerate(breaks):
+                    # If we're already past the end of this break, mark it as handled
+                    if time_pos >= float(brk["end"]):
+                        handled_break_indices.add(i)
+                        if settings.debug:
+                            print(f"[debug] commercials: marking break {i+1} as already-past (time_pos={time_pos:.2f}s >= end={float(brk['end']):.2f}s)")
+            
             if settings.debug:
                 if episode_metadata is not None:
                     num_breaks = len(episode_metadata.get("breaks", []))
-                    print(f"[debug] commercials: loaded metadata for {Path(current_media).name} ({num_breaks} break(s))")
+                    num_handled = len(handled_break_indices)
+                    print(f"[debug] commercials: loaded metadata for {Path(current_media).name} ({num_breaks} break(s), {num_handled} already-past)")
                 else:
                     print(f"[debug] commercials: no metadata for {Path(current_media).name}")
         
@@ -270,8 +306,7 @@ def main() -> int:
         if not breaks:
             return False
         
-        # Get current playback position
-        time_pos = player._get_float_property("time-pos")
+        # time_pos was already retrieved above - check if it's valid
         if time_pos is None:
             return False
         
@@ -292,10 +327,16 @@ def main() -> int:
                 if settings.debug:
                     print(f"[debug] commercials: triggering break {i+1}/{len(breaks)} at {time_pos:.2f}s (window: {start:.2f}-{end:.2f})")
                 
-                # Play commercials
+                # Play commercials (may be interrupted by user input)
                 in_commercial_break = True
-                _play_commercials(count=3)
+                interrupted_event = _play_commercials(count=3)
                 in_commercial_break = False
+                
+                # If interrupted, don't resume episode - let the interrupt be handled
+                if interrupted_event is not None:
+                    if settings.debug:
+                        print(f"[debug] commercials: break interrupted, not resuming episode")
+                    return False
                 
                 # Resume episode at break end time
                 if settings.debug:
@@ -318,14 +359,24 @@ def main() -> int:
             player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
 
         def _handle_input_event(evt: InputEvent) -> int | None:
+            nonlocal current_episode_path, episode_metadata, handled_break_indices
+            
             if evt.kind == "quit":
                 print("Exiting.")
                 return 0
             if evt.kind == "channel_up":
+                # Reset commercial state when changing channels
+                current_episode_path = None
+                episode_metadata = None
+                handled_break_indices = set()
                 info = station.channel_up(now_utc())
                 if player is not None:
                     player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
             if evt.kind == "channel_down":
+                # Reset commercial state when changing channels
+                current_episode_path = None
+                episode_metadata = None
+                handled_break_indices = set()
                 info = station.channel_down(now_utc())
                 if player is not None:
                     player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
@@ -457,7 +508,17 @@ def main() -> int:
                             if channel_cfg is not None and channel_cfg.show_commercials:
                                 if settings.debug:
                                     print(f"[debug] commercials: playing between-episode commercials")
-                                _play_commercials(count=3)
+                                interrupted_event = _play_commercials(count=3)
+                                
+                                # If interrupted, handle the event instead of playing next episode
+                                if interrupted_event is not None:
+                                    if settings.debug:
+                                        print(f"[debug] commercials: between-episode interrupted, handling event")
+                                    rc = _handle_input_event(interrupted_event)
+                                    if rc is not None:
+                                        return rc
+                                    # Skip to next iteration to let the channel change take effect
+                                    continue
                             
                             # Now play the next episode
                             player.play(info.current_file, info.position_sec, call_sign=info.call_sign)
