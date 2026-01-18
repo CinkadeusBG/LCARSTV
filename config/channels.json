@@ -7,6 +7,7 @@
       "label": "Star Trek: The Original Series",
       "media_dirs": ["Z:/media/KTOS"],
       "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
       "cooldown": 10,
       "sequential_playthrough": false
     },
@@ -15,6 +16,7 @@
       "label": "Star Trek: The Next Generation",
       "media_dirs": ["Z:/media/WTNG"],
       "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
       "cooldown": 10,
       "sequential_playthrough": false
     },
@@ -23,6 +25,7 @@
       "label": "Star Trek: Deep Space Nine",
       "media_dirs": ["Z:/media/KDSN"],
       "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
       "cooldown": 10
     },
     {
@@ -30,6 +33,7 @@
       "label": "Star Trek: Voyager",
       "media_dirs": ["Z:/media/KVOY"],
       "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
       "cooldown": 10
     },
     {
@@ -37,12 +41,14 @@
       "label": "Star Trek Films (Pre-Kelvin)",
       "media_dirs": ["Z:/media/WMOV"],
       "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": false,
       "cooldown": 3
     },
     {
       "call_sign": "WMIX",
       "label": "All Trek Mix",
       "aggregate_from_channels": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV"],
+      "show_commercials": true,
       "cooldown": 0
     }
   ]
