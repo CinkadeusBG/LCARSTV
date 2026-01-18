@@ -60,6 +60,7 @@ class ChannelConfig:
     blocks: tuple[BlockConfig, ...] = ()
     sequential_playthrough: bool = False
     aggregate_from_channels: tuple[str, ...] | None = None
+    show_commercials: bool = False
 
 
 @dataclass(frozen=True)
@@ -96,6 +97,9 @@ class Settings:
     gpio_btn_quit: int | None = None
     gpio_pull_up: bool = True
     gpio_bounce_sec: float = 0.05
+    
+    # Commercial playback (optional; off by default).
+    commercials_dir: Path | None = None
 
 
 def load_channels_config(path: Path) -> ChannelsConfig:
@@ -128,6 +132,9 @@ def load_channels_config(path: Path) -> ChannelsConfig:
         if aggregate_from_raw is not None:
             aggregate_from_channels = tuple(str(x).strip().upper() for x in aggregate_from_raw)
         
+        # Commercial playback support
+        show_commercials = bool(ch.get("show_commercials", False))
+        
         # Validation: aggregate channels should not have media_dirs
         if aggregate_from_channels is not None:
             if media_dirs:
@@ -145,6 +152,7 @@ def load_channels_config(path: Path) -> ChannelsConfig:
                 blocks=tuple(blocks_cfg),
                 sequential_playthrough=sequential_playthrough,
                 aggregate_from_channels=aggregate_from_channels,
+                show_commercials=show_commercials,
             )
         )
     if not chans:
@@ -190,6 +198,10 @@ def load_settings(path: Path) -> Settings:
 
     gpio_pull_up = bool(data.get("gpio_pull_up", True))
     gpio_bounce_sec = float(data.get("gpio_bounce_sec", 0.05))
+    
+    # Commercial playback settings
+    commercials_dir_raw = data.get("commercials_dir")
+    commercials_dir = Path(commercials_dir_raw) if commercials_dir_raw else None
 
     return Settings(
         extensions=extensions,
@@ -208,4 +220,5 @@ def load_settings(path: Path) -> Settings:
         gpio_btn_quit=gpio_btn_quit,
         gpio_pull_up=gpio_pull_up,
         gpio_bounce_sec=gpio_bounce_sec,
+        commercials_dir=commercials_dir,
     )
