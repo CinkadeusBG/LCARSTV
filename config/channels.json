@@ -1,5 +1,5 @@
 {
-  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV", "WMIX"],
+  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV", "WMIX", "WGGS", "WAGS", "KLIS"],
 
   "channels": [
     {
@@ -47,9 +47,36 @@
     {
       "call_sign": "WMIX",
       "label": "All Trek Mix",
-      "aggregate_from_channels": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV"],
+      "aggregate_from_channels": ["KTOS", "WTNG", "KDSN", "KVOY", "WGGS", "WAGS", "KLIS"],
       "show_commercials": true,
       "cooldown": 0
+    },
+    {
+      "call_sign": "WGGS",
+      "label": "The Golden Girls",
+      "media_dirs": ["Z:/media/WGGS"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10,
+      "sequential_playthrough": false
+    },
+    {
+      "call_sign": "WAGS",
+      "label": "The Andy Griffith Show",
+      "media_dirs": ["Z:/media/WAGS"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10,
+      "sequential_playthrough": false
+    },
+    {
+      "call_sign": "KLIS",
+      "label": "Lost in Space",
+      "media_dirs": ["Z:/media/KLIS"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10,
+      "sequential_playthrough": true
     }
   ]
 }
