@@ -342,6 +342,23 @@ class Station:
                     persist=True,
                     save=False,
                 )
+                
+                # Validate the picked block exists (safety check for stale selector state)
+                if current_block_id not in aggregate_blocks_by_id:
+                    if settings.debug:
+                        print(
+                            f"[WARNING] {ch.call_sign}: pick_next_aggregate returned block {current_block_id!r} "
+                            f"which is not in current aggregate blocks pool. Selecting fallback block..."
+                        )
+                    # Fallback: pick any valid block from current pool
+                    if aggregate_eligible:
+                        current_block_id = aggregate_eligible[0]
+                    else:
+                        raise ValueError(f"{ch.call_sign}: no blocks available in aggregate_eligible")
+                    
+                    if settings.debug:
+                        print(f"[WARNING] {ch.call_sign}: using fallback block {current_block_id}")
+                
                 block = aggregate_blocks_by_id[current_block_id]
                 
                 dur = max(1.0, float(block.total_duration_sec))
