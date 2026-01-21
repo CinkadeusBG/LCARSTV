@@ -87,7 +87,7 @@ def main() -> int:
 
     inp = KeyboardInput()
     print("LCARSTV dry-run" if args.dry_run else "LCARSTV playback")
-    print("Controls: PageUp/Up=Channel Up, PageDown/Down=Channel Down, Q=Quit")
+    print("Controls: PageUp/Up=Channel Up, PageDown/Down=Channel Down, R=Reset All, Q=Quit")
     print()
 
     # Optional GPIO buttons (Pi/Linux only; must be explicitly enabled via settings.gpio_enable).
@@ -213,7 +213,8 @@ def main() -> int:
                     try:
                         gevt = gpio_q.get_nowait()
                         if gevt.kind in ("quit", "channel_up", "channel_down"):
-                            if settings.debug:
+                            # Silent for quit; log only channel changes when debug enabled
+                            if settings.debug and gevt.kind != "quit":
                                 print(f"[debug] commercials: interrupted by {gevt.kind}")
                             return gevt
                     except Exception:
@@ -221,7 +222,8 @@ def main() -> int:
                 
                 evt = inp.poll()
                 if evt is not None and evt.kind in ("quit", "channel_up", "channel_down"):
-                    if settings.debug:
+                    # Silent for quit; log only channel changes when debug enabled
+                    if settings.debug and evt.kind != "quit":
                         print(f"[debug] commercials: interrupted by {evt.kind}")
                     return evt
                 
@@ -242,31 +244,33 @@ def main() -> int:
         
         return None
     
-    def _check_and_handle_breaks() -> bool:
+    def _check_and_handle_breaks() -> tuple[bool, InputEvent | None]:
         """Check if we need to interrupt playback for an in-episode commercial break.
         
         Returns:
-            True if a break was handled (playback was interrupted), False otherwise
+            Tuple of (break_was_handled, interrupted_event)
+            - break_was_handled: True if a break was played (even if interrupted)
+            - interrupted_event: InputEvent if user interrupted, None otherwise
         """
         nonlocal current_episode_path, episode_metadata, handled_break_indices, in_commercial_break
         
         if player is None:
-            return False
+            return (False, None)
         
         # Only check breaks if show_commercials is enabled for the active channel
         active_chan = station.channels.get(station.active_call_sign)
         if active_chan is None:
-            return False
+            return (False, None)
         
         # Get channel config to check show_commercials flag
         channel_cfg = channels_cfg.by_call_sign().get(station.active_call_sign)
         if channel_cfg is None or not channel_cfg.show_commercials:
-            return False
+            return (False, None)
         
         # Get currently playing file
         current_media = player.current_media_path
         if current_media is None:
-            return False
+            return (False, None)
         
         current_media_norm = _norm_path(current_media)
         
@@ -300,15 +304,15 @@ def main() -> int:
         
         # No metadata means no breaks to handle
         if episode_metadata is None:
-            return False
+            return (False, None)
         
         breaks = episode_metadata.get("breaks", [])
         if not breaks:
-            return False
+            return (False, None)
         
         # time_pos was already retrieved above - check if it's valid
         if time_pos is None:
-            return False
+            return (False, None)
         
         # Check each break window
         for i, brk in enumerate(breaks):
@@ -332,11 +336,9 @@ def main() -> int:
                 interrupted_event = _play_commercials(count=3)
                 in_commercial_break = False
                 
-                # If interrupted, don't resume episode - let the interrupt be handled
+                # If interrupted, return the event for the main loop to handle
                 if interrupted_event is not None:
-                    if settings.debug:
-                        print(f"[debug] commercials: break interrupted, not resuming episode")
-                    return False
+                    return (True, interrupted_event)
                 
                 # Resume episode at break end time
                 if settings.debug:
@@ -347,9 +349,9 @@ def main() -> int:
                 # Set a guard to prevent immediate re-triggers
                 player.set_playback_guard(seconds=1.0, reason="COMMERCIAL_BREAK")
                 
-                return True
+                return (True, None)
         
-        return False
+        return (False, None)
 
     try:
 
@@ -378,6 +380,14 @@ def main() -> int:
                 episode_metadata = None
                 handled_break_indices = set()
                 info = station.channel_down(now_utc())
+                if player is not None:
+                    player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
+            if evt.kind == "reset_all":
+                # Reset all channels to fresh state
+                current_episode_path = None
+                episode_metadata = None
+                handled_break_indices = set()
+                info = station.reset_all_channels(now_utc())
                 if player is not None:
                     player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
             return None
@@ -452,9 +462,18 @@ def main() -> int:
                     
                     # Check for in-episode commercial breaks (only when not already in a break)
                     if not in_commercial_break:
-                        break_handled = _check_and_handle_breaks()
+                        break_handled, interrupted_event = _check_and_handle_breaks()
+                        
+                        # If user interrupted during the break, handle the event
+                        if interrupted_event is not None:
+                            rc = _handle_input_event(interrupted_event)
+                            if rc is not None:
+                                return rc
+                            # Skip to next iteration (channel change or other action)
+                            continue
+                        
                         if break_handled:
-                            # A commercial break was just played
+                            # A commercial break was just played (completed normally)
                             # Reset suppression and continue (skip auto-advance logic this iteration)
                             suppress_until_time = time.time() + 0.5
                             awaiting_mpv_path = _norm_path(current_media)

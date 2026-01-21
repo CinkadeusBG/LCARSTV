@@ -20,6 +20,7 @@ class KeyboardInput:
     - Up arrow: channel up
     - Down arrow: channel down
     - Q: quit
+    - R: reset all channels
     """
 
     _posix_fd: int | None = None
@@ -86,6 +87,8 @@ class KeyboardInput:
 
         if ch.lower() == "q":
             return InputEvent(kind="quit")
+        if ch.lower() == "r":
+            return InputEvent(kind="reset_all")
         return None
 
     def _poll_posix(self) -> InputEvent | None:
@@ -126,6 +129,9 @@ class KeyboardInput:
             if b0 in (ord("q"), ord("Q")):
                 del self._posix_buf[0]
                 return InputEvent(kind="quit")
+            if b0 in (ord("r"), ord("R")):
+                del self._posix_buf[0]
+                return InputEvent(kind="reset_all")
 
             # ESC-sequence.
             if b0 == 0x1B:

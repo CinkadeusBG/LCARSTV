@@ -1,5 +1,5 @@
 {
-  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV", "WMIX"],
+  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV", "WMIX", "WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "KSBY", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ"],
 
   "channels": [
     {
@@ -45,9 +45,97 @@
     {
       "call_sign": "WMIX",
       "label": "All Trek Mix",
-      "aggregate_from_channels": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV"],
+      "aggregate_from_channels": ["KTOS", "WTNG", "KDSN", "KVOY", "WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "KSBY", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ"],
       "show_commercials": true,
       "cooldown": 0
+    },
+    {
+      "call_sign": "WGGS",
+      "label": "The Golden Girls",
+      "media_dirs": ["Z:/media/WGGS"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10
+    },
+    {
+      "call_sign": "WAGS",
+      "label": "The Andy Griffith Show",
+      "media_dirs": ["Z:/media/WAGS"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10
+    },
+    {
+      "call_sign": "KLIS",
+      "label": "Lost in Space",
+      "media_dirs": ["Z:/media/KLIS"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10
+    },
+    {
+      "call_sign": "KFTS",
+      "label": "Family Ties",
+      "media_dirs": ["Z:/media/KFTS"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10
+    },
+    {
+      "call_sign": "KQLP",
+      "label": "Quantum Leap",
+      "media_dirs": ["Z:/media/KQLP"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10
+    },
+    {
+      "call_sign": "KSBY",
+      "label": "The Cosby Show",
+      "media_dirs": ["Z:/media/KSBY"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10
+    },
+    {
+      "call_sign": "WATM",
+      "label": "The A-Team",
+      "media_dirs": ["Z:/media/WATM"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10
+    },
+    {
+      "call_sign": "WCHS",
+      "label": "Cheers",
+      "media_dirs": ["Z:/media/WCHS"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10
+    },
+    {
+      "call_sign": "WKRD",
+      "label": "Knight Rider",
+      "media_dirs": ["Z:/media/WKRD"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10
+    },
+    {
+      "call_sign": "WMSH",
+      "label": "M*A*S*H",
+      "media_dirs": ["Z:/media/WMSH"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10
+    },
+    {
+      "call_sign": "WTLZ",
+      "label": "The Twilight Zone",
+      "media_dirs": ["Z:/media/WTLZ"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": true,
+      "cooldown": 10
     }
   ]
 }

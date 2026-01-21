@@ -324,6 +324,15 @@ class Station:
             
             if persisted_ch.current_block_id and persisted_ch.current_block_id in aggregate_blocks_by_id:
                 current_block_id = persisted_ch.current_block_id
+            else:
+                # Invalid/missing block ID - clear it from persisted state
+                if persisted_ch.current_block_id is not None:
+                    if settings.debug:
+                        print(
+                            f"[debug] {ch.call_sign} aggregate: invalid persisted block_id={persisted_ch.current_block_id!r} "
+                            f"not found in aggregate blocks pool (possibly sources changed). Clearing and re-initializing."
+                        )
+                    persisted_ch.current_block_id = None
             
             # If we don't have a valid block, pick one using aggregate logic
             if current_block_id is None or started_at is None:
@@ -500,3 +509,93 @@ class Station:
             started_at=chan.state.started_at,
             position_sec=pos,
         )
+
+    def reset_all_channels(self, now: datetime) -> TuneInfo:
+        """Reset all channels to fresh state with new random positions.
+
+        This clears all scheduler state (bag, recent, last_played, sequential indices)
+        and picks new random blocks for each channel, then sets random offsets within
+        those blocks. All state is persisted to disk.
+
+        Returns:
+            TuneInfo for the currently active channel after reset.
+        """
+
+        print("=== RESETTING ALL CHANNELS ===")
+
+        for call_sign, chan in self.channels.items():
+            # Clear scheduler state for this channel
+            persisted_ch = chan.selector.state.channels.get(call_sign)
+            if persisted_ch is not None:
+                persisted_ch.bag = None
+                persisted_ch.recent = None
+                persisted_ch.last_played = None
+                persisted_ch.sequential_index = 0
+                # Clear aggregate-specific state if present
+                if persisted_ch.aggregate_set is not None:
+                    persisted_ch.aggregate_set = []
+                if persisted_ch.aggregate_set_index is not None:
+                    persisted_ch.aggregate_set_index = 0
+                if persisted_ch.aggregate_source_states is not None:
+                    persisted_ch.aggregate_source_states = {}
+
+            # Reinitialize scheduler (creates fresh bag)
+            chan.selector.ensure_initialized(
+                call_sign=call_sign,
+                items=chan.eligible_block_ids,
+                persist=True,
+                save=False,
+            )
+
+            # Pick a new random block
+            if chan.is_aggregate:
+                new_block_id = chan.selector.pick_next_aggregate(
+                    call_sign=call_sign,
+                    source_infos=chan.aggregate_source_infos or {},
+                    persist=True,
+                    save=False,
+                )
+            else:
+                new_block_id = chan.selector.pick_next(
+                    call_sign=call_sign,
+                    items=chan.eligible_block_ids,
+                    cooldown=chan.cooldown,
+                    current_item=None,
+                    persist=True,
+                    save=False,
+                    sequential=chan.sequential_playthrough,
+                )
+
+            # Set new random offset within the block
+            block = chan.blocks_by_id[new_block_id]
+            dur = max(1.0, float(block.total_duration_sec))
+            offset = random.random() * dur
+            new_started_at = now - timedelta(seconds=offset)
+
+            # Update channel state
+            chan.state.current_block_id = new_block_id
+            chan.state.started_at = new_started_at
+
+            # Persist the new state
+            pch = chan.selector.state.channels.get(call_sign)
+            if pch is not None:
+                pch.current_block_id = new_block_id
+                pch.current_file = None
+                pch.started_at = new_started_at
+
+            if self.settings.debug:
+                pb = compute_block_playback(block=block, started_at=new_started_at, now=now)
+                print(
+                    f"[debug] {call_sign} reset: block={display_block_id(new_block_id)} started_at={new_started_at.isoformat()} offset={offset:.2f}s file={pb.file_path.name} file_offset={pb.file_offset_sec:.2f}s"
+                )
+
+        # Save all changes to disk (single atomic write)
+        if self.channels:
+            first_chan = next(iter(self.channels.values()))
+            first_chan.store.save(first_chan.selector.state)
+
+        print("All channels reset to fresh state")
+        print()
+
+        # Return tune info for the active channel
+        return self.tune_to(self.active_call_sign, now)

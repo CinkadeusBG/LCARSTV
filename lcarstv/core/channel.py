@@ -29,7 +29,59 @@ class ChannelRuntime:
 
     def get_current_block(self) -> Block:
         if self.state.current_block_id not in self.blocks_by_id:
-            raise KeyError(f"Unknown block id for {self.call_sign}: {self.state.current_block_id!r}")
+            # Invalid block ID - this can happen if:
+            # 1. Aggregate channel's sources changed between runs
+            # 2. Media files moved/deleted
+            # 3. State file corruption
+            # Recovery: pick a new valid block and update state
+            import sys
+            print(
+                f"[WARNING] {self.call_sign}: invalid block ID {self.state.current_block_id!r} not in blocks pool. "
+                f"This can happen if aggregate sources changed or media was moved. Picking new block...",
+                file=sys.stderr
+            )
+            
+            # Pick a new valid block
+            if self.is_aggregate:
+                new_block_id = self.selector.pick_next_aggregate(
+                    call_sign=self.call_sign,
+                    source_infos=self.aggregate_source_infos or {},
+                    persist=True,
+                    save=True,
+                )
+            else:
+                new_block_id = self.selector.pick_next(
+                    call_sign=self.call_sign,
+                    items=self.eligible_block_ids,
+                    cooldown=self.cooldown,
+                    current_item=None,
+                    persist=True,
+                    save=True,
+                    sequential=self.sequential_playthrough,
+                )
+            
+            # Update state
+            self.state.current_block_id = new_block_id
+            
+            # Ensure we have a valid started_at
+            from datetime import datetime, timedelta
+            from .clock import now_utc
+            if self.state.started_at is None or self.state.started_at > now_utc():
+                # Pick a random offset within the new block
+                import random
+                block = self.blocks_by_id[new_block_id]
+                dur = max(1.0, float(block.total_duration_sec))
+                offset = random.random() * dur
+                self.state.started_at = now_utc() - timedelta(seconds=offset)
+            
+            # Persist the fix
+            self._persist_live_state()
+            
+            print(
+                f"[WARNING] {self.call_sign}: recovered with new block {new_block_id}",
+                file=sys.stderr
+            )
+        
         block = self.blocks_by_id[self.state.current_block_id]
 
         # Hydrate durations on-demand for the current block.
