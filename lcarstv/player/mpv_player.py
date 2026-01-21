@@ -439,11 +439,6 @@ class MpvPlayer:
         # If guarded, suppress triggers, but still update edge state so we don't
         # immediately fire on guard expiry.
         if self._guard_active():
-            remaining = float(self._guard_until) - time.time()
-            if self.debug:
-                print(
-                    f"[debug] guard: suppress triggers remaining={max(0.0, remaining):.3f}s reason={self._guard_reason}"
-                )
             # Best-effort edge updates.
             eof_reached = self._get_bool_property("eof-reached")
             if eof_reached is not None:
