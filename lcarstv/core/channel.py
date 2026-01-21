@@ -60,6 +60,27 @@ class ChannelRuntime:
                     sequential=self.sequential_playthrough,
                 )
             
+            # Validate that the picked block actually exists in our current blocks pool
+            # This can happen if selector state references blocks from a previous run
+            if new_block_id not in self.blocks_by_id:
+                print(
+                    f"[WARNING] {self.call_sign}: recovery picked block {new_block_id!r} "
+                    f"which is not in current blocks pool. Selecting fallback block...",
+                    file=sys.stderr
+                )
+                # Fallback: pick any valid block from current pool
+                if self.eligible_block_ids:
+                    new_block_id = self.eligible_block_ids[0]
+                elif self.blocks_by_id:
+                    new_block_id = next(iter(self.blocks_by_id.keys()))
+                else:
+                    raise ValueError(f"{self.call_sign}: no blocks available in blocks_by_id")
+                
+                print(
+                    f"[WARNING] {self.call_sign}: using fallback block {new_block_id}",
+                    file=sys.stderr
+                )
+            
             # Update state
             self.state.current_block_id = new_block_id
             
@@ -202,6 +223,28 @@ class ChannelRuntime:
                     save=False,
                     sequential=self.sequential_playthrough,
                 )
+            
+            # Validate the selected block exists (safety check for stale selector state)
+            if next_block_id not in self.blocks_by_id:
+                import sys
+                print(
+                    f"[WARNING] {self.call_sign}: rollover picked block {next_block_id!r} "
+                    f"which is not in current blocks pool. Selecting fallback block...",
+                    file=sys.stderr
+                )
+                # Fallback: pick any valid block from current pool
+                if self.eligible_block_ids:
+                    next_block_id = self.eligible_block_ids[0]
+                elif self.blocks_by_id:
+                    next_block_id = next(iter(self.blocks_by_id.keys()))
+                else:
+                    raise ValueError(f"{self.call_sign}: no blocks available in blocks_by_id")
+                
+                print(
+                    f"[WARNING] {self.call_sign}: using fallback block {next_block_id}",
+                    file=sys.stderr
+                )
+            
             self.state.current_block_id = str(next_block_id)
 
             persisted = self._persist_live_state_if(persist=persist)
