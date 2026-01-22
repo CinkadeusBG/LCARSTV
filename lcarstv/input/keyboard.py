@@ -97,6 +97,12 @@ class KeyboardInput:
 
         import select
 
+        # CRITICAL FIX: Aggressively clear buffer if it's getting large.
+        # This prevents multi-hour accumulation of unrecognized terminal noise.
+        # Threshold: 16 bytes (generous for a single escape sequence, but tiny for hours of noise).
+        if len(self._posix_buf) > 16:
+            self._posix_buf.clear()
+
         # Non-blocking poll.
         r, _w, _x = select.select([self._posix_fd], [], [], 0)
         if not r:
@@ -122,7 +128,14 @@ class KeyboardInput:
         # - Down:  ESC [ B
         # - PgUp:  ESC [ 5 ~
         # - PgDn:  ESC [ 6 ~
-        while self._posix_buf:
+        #
+        # CRITICAL FIX: Limit loop iterations to prevent O(n^2) behavior when buffer
+        # contains many unrecognized bytes. Process at most 32 bytes per poll() call.
+        max_iterations = 32
+        iterations = 0
+        
+        while self._posix_buf and iterations < max_iterations:
+            iterations += 1
             b0 = self._posix_buf[0]
 
             # Normal char.
@@ -136,12 +149,14 @@ class KeyboardInput:
             # ESC-sequence.
             if b0 == 0x1B:
                 if len(self._posix_buf) < 2:
+                    # Incomplete sequence; wait for more data on next poll.
                     return None
                 if self._posix_buf[1] != ord("["):
                     # Unknown; consume ESC and continue.
                     del self._posix_buf[0]
                     continue
                 if len(self._posix_buf) < 3:
+                    # Incomplete CSI sequence; wait for more data on next poll.
                     return None
 
                 b2 = self._posix_buf[2]
@@ -157,6 +172,7 @@ class KeyboardInput:
                 # PageUp/PageDown.
                 if b2 in (ord("5"), ord("6")):
                     if len(self._posix_buf) < 4:
+                        # Incomplete sequence; wait for more data on next poll.
                         return None
                     if self._posix_buf[3] == ord("~"):
                         del self._posix_buf[:4]
@@ -168,5 +184,10 @@ class KeyboardInput:
 
             # Unhandled byte; consume.
             del self._posix_buf[0]
+
+        # CRITICAL FIX: If we've processed max_iterations without finding a valid event,
+        # and the buffer still has data, it's likely garbage. Clear it to prevent accumulation.
+        if iterations >= max_iterations and len(self._posix_buf) > 0:
+            self._posix_buf.clear()
 
         return None
