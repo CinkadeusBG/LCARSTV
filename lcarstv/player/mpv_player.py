@@ -4,9 +4,9 @@ import os
 import time
 from pathlib import Path
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import threading
-from typing import Callable
+from typing import Any, Callable
 
 from .mpv_ipc import MpvIpcClient, MpvIpcError
 
@@ -95,6 +95,10 @@ class MpvPlayer:
     # Suppress end-triggers during static burst and immediately after load/seek.
     _guard_until: float = 0.0
     _guard_reason: str | None = None
+    
+    # Property cache to reduce IPC polling overhead
+    _property_cache: dict[str, tuple[float, Any]] = field(default_factory=dict, init=False, repr=False)
+    _property_cache_ttl: float = 0.1  # Cache properties for 100ms
 
     def set_playback_guard(self, *, seconds: float, reason: str) -> None:
         seconds = max(0.0, float(seconds))
@@ -266,13 +270,26 @@ class MpvPlayer:
         return False
 
     # --- Best-effort property helpers (never raise) ---
-    def _get_property(self, name: str, *, timeout_sec: float = 0.5) -> dict:
+    def _get_property(self, name: str, *, timeout_sec: float = 0.5, use_cache: bool = True) -> dict:
         if self._ipc is None:
             return {"error": "no-ipc", "data": None}
+        
+        # Check cache if enabled
+        if use_cache and name in self._property_cache:
+            cached_time, cached_value = self._property_cache[name]
+            if time.time() - cached_time < self._property_cache_ttl:
+                return cached_value
+        
         try:
             # Property polling should be quiet; IPC trace is for high-signal events.
             # Reduced timeout from 1.0s to 0.5s to recover faster from transient delays.
-            return self._ipc.command("get_property", name, timeout_sec=timeout_sec)
+            result = self._ipc.command("get_property", name, timeout_sec=timeout_sec)
+            
+            # Cache the result if successful
+            if use_cache and result.get("error") in (None, "success"):
+                self._property_cache[name] = (time.time(), result)
+            
+            return result
         except Exception:
             return {"error": "exception", "data": None}
 
@@ -800,6 +817,9 @@ class MpvPlayer:
         self._cached_duration_for_path = None
         self._cached_duration_sec = None
         self._cached_duration_last_fetch_time = 0.0
+        
+        # Clear property cache on media change
+        self._property_cache.clear()
 
         # Wait briefly for the file to become seekable, then seek best-effort.
         # If we can't seek, keep running and just play from 0.

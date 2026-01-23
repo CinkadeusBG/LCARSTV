@@ -4,6 +4,7 @@ import json
 import os
 import socket
 import time
+from collections import deque
 from dataclasses import dataclass, field
 import threading
 from typing import Any, BinaryIO
@@ -22,6 +23,11 @@ class MpvIpcClient:
     - Linux/Pi: Unix domain socket path like: /tmp/lcarstv-mpv.sock
 
     Synchronous request/response. No threads.
+    
+    Performance optimizations:
+    - Buffered reading (batch reads instead of byte-by-byte)
+    - Async event ring buffer (prevents unbounded accumulation)
+    - Socket draining before commands (clears stale events)
     """
 
     pipe_path: str
@@ -32,6 +38,15 @@ class MpvIpcClient:
     _sock: socket.socket | None = None
     _next_request_id: int = 1
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
+    
+    # Buffered reading state
+    _read_buffer: bytearray = field(default_factory=bytearray, init=False, repr=False)
+    
+    # Async event buffer (ring buffer with max size)
+    _async_events: deque = field(default_factory=lambda: deque(maxlen=100), init=False, repr=False)
+    
+    # IPC performance monitoring
+    _ipc_call_times: deque = field(default_factory=lambda: deque(maxlen=20), init=False, repr=False)
 
     def connect(self, *, timeout_sec: float = 2.0) -> None:
         deadline = time.time() + timeout_sec
@@ -133,15 +148,87 @@ class MpvIpcClient:
         except OSError as e:
             raise MpvIpcError(f"Failed to write to mpv IPC transport: {e}")
 
-    def _read_byte(self) -> bytes:
+    def _read_chunk(self, max_bytes: int = 4096) -> bytes:
+        """Read up to max_bytes from the transport.
+        
+        This replaces the old byte-by-byte reading with buffered reads,
+        significantly reducing syscall overhead.
+        
+        Note: On Windows (file handles), this is a blocking read.
+        On Unix (sockets), this uses non-blocking mode.
+        """
         fh, sock = self._require_transport()
         try:
             if fh is not None:
-                return fh.read(1)
+                # Windows named pipe (blocking read)
+                # Only read what's available; don't force a full buffer read
+                return fh.read(max_bytes)
             assert sock is not None
-            return sock.recv(1)
+            # Unix socket: use non-blocking recv to get available data
+            sock.setblocking(False)
+            try:
+                data = sock.recv(max_bytes)
+                return data
+            finally:
+                sock.setblocking(True)
+        except BlockingIOError:
+            # No data available (non-blocking mode, Unix only)
+            return b""
         except OSError as e:
             raise MpvIpcError(f"Failed to read from mpv IPC transport: {e}")
+    
+    def _drain_socket_buffer(self, max_messages: int = 50) -> None:
+        """Drain pending data from the socket buffer and store async events.
+        
+        This prevents stale event accumulation between commands.
+        Called before each IPC command.
+        
+        Note: Only applies to Unix sockets. Windows named pipes don't need draining
+        since they don't accumulate async events the same way.
+        """
+        # Skip draining for Windows file handles (named pipes)
+        if self._sock is None:
+            return
+        
+        messages_processed = 0
+        while messages_processed < max_messages:
+            # Try to read available data
+            chunk = self._read_chunk(max_bytes=4096)
+            if not chunk:
+                break
+            
+            self._read_buffer.extend(chunk)
+            
+            # Process complete lines (newline-delimited JSON)
+            while True:
+                try:
+                    newline_idx = self._read_buffer.index(b'\n')
+                except ValueError:
+                    # No complete line yet
+                    break
+                
+                line = bytes(self._read_buffer[:newline_idx]).strip()
+                del self._read_buffer[:newline_idx + 1]
+                
+                if not line:
+                    continue
+                
+                try:
+                    msg = json.loads(line.decode("utf-8"))
+                    # Store async events for potential future use
+                    if "request_id" not in msg and "event" in msg:
+                        self._async_events.append(msg)
+                    messages_processed += 1
+                except json.JSONDecodeError:
+                    continue
+            
+            # If we've read a lot of data but still have incomplete lines, 
+            # prevent unbounded buffer growth
+            if len(self._read_buffer) > 16384:  # 16KB limit
+                if self.debug:
+                    print(f"[debug] mpv: clearing oversized read buffer ({len(self._read_buffer)} bytes)")
+                self._read_buffer.clear()
+                break
 
     def command(self, *cmd: Any, timeout_sec: float = 2.0) -> dict[str, Any]:
         """Send an mpv IPC command and wait for the matching response."""
@@ -149,6 +236,9 @@ class MpvIpcClient:
         # Thread-safe: some callers may schedule time-based follow-ups (e.g., clearing an
         # overlay) without impacting the main playback loop.
         with self._lock:
+            # Drain socket buffer before issuing command to prevent stale event buildup
+            # (Unix sockets only; Windows named pipes are skipped automatically)
+            self._drain_socket_buffer(max_messages=50)
             return self._command_locked(*cmd, timeout_sec=timeout_sec)
 
     def trace_command(self, *cmd: Any, timeout_sec: float = 2.0) -> dict[str, Any]:
@@ -166,6 +256,8 @@ class MpvIpcClient:
     ) -> dict[str, Any]:
         """Implementation for `command()`. Call only while holding `_lock`."""
 
+        start_time = time.time()
+        
         req_id = self._next_request_id
         self._next_request_id += 1
 
@@ -178,35 +270,57 @@ class MpvIpcClient:
 
         self._write(raw)
 
-        # Read lines until we see the response with matching request_id.
-        # mpv may also send async 'event' messages; ignore them.
+        # Read and process messages until we find our response.
+        # Uses buffered reading instead of byte-by-byte for performance.
         deadline = time.time() + timeout_sec
-        buf = bytearray()
+        
         while time.time() < deadline:
-            b = self._read_byte()
-
-            if not b:
-                time.sleep(0.01)
-                continue
-
-            if b == b"\n":
-                line = bytes(buf).strip()
-                buf.clear()
+            # Try to read a chunk of data
+            chunk = self._read_chunk(max_bytes=4096)
+            if chunk:
+                self._read_buffer.extend(chunk)
+            
+            # Process all complete lines in the buffer
+            while True:
+                try:
+                    newline_idx = self._read_buffer.index(b'\n')
+                except ValueError:
+                    # No complete line yet, need to read more
+                    break
+                
+                line = bytes(self._read_buffer[:newline_idx]).strip()
+                del self._read_buffer[:newline_idx + 1]
+                
                 if not line:
                     continue
+                
                 try:
                     msg = json.loads(line.decode("utf-8"))
                 except json.JSONDecodeError:
                     continue
 
                 if "request_id" in msg and msg.get("request_id") == req_id:
+                    elapsed = time.time() - start_time
+                    
+                    # Track IPC performance
+                    self._ipc_call_times.append(elapsed)
+                    
+                    # Log slow IPC calls
+                    if self.debug and elapsed > 0.1:
+                        avg_time = sum(self._ipc_call_times) / len(self._ipc_call_times) if self._ipc_call_times else 0
+                        print(f"[debug] mpv: slow IPC call ({elapsed*1000:.1f}ms, avg={avg_time*1000:.1f}ms): {cmd[0] if cmd else 'unknown'}")
+                    
                     if self.debug and do_trace:
                         print(f"[debug] mpv <<< {msg}")
                     return msg
 
-                # ignore event or other command responses
-                continue
+                # Store async events for potential future use
+                if "event" in msg:
+                    self._async_events.append(msg)
+                # Ignore responses for other request_ids
 
-            buf += b
+            # Small sleep to avoid tight loop when no data available
+            if not chunk:
+                time.sleep(0.01)
 
         raise MpvIpcError(f"Timed out waiting for mpv IPC response for request_id={req_id}")
