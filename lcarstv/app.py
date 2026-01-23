@@ -8,6 +8,7 @@ from pathlib import Path
 
 from lcarstv.core.blocks import load_episode_metadata
 from lcarstv.core.clock import now_utc
+from lcarstv.core.commercial_catalog import CommercialCatalog
 from lcarstv.core.commercials import CommercialPool
 from lcarstv.core.config import load_channels, load_settings_profile
 from lcarstv.core.station import Station
@@ -85,6 +86,50 @@ def main() -> int:
         now=now_utc(),
     )
 
+    # Eager probing: populate duration cache for all media files on startup
+    # This ensures the cache is complete on first run, making subsequent startups instant
+    print("Building duration cache for all media files...")
+    total_files = 0
+    probed_count = 0
+    cached_count = 0
+    
+    # First pass: count total files across all channels
+    for call_sign, channel in station.channels.items():
+        for block_id, block in channel.blocks_by_id.items():
+            total_files += len(block.files)
+    
+    print(f"Scanning {total_files} media file(s) across {len(station.channels)} channel(s)...")
+    
+    # Second pass: probe all files
+    for call_sign, channel in station.channels.items():
+        for block_id, block in channel.blocks_by_id.items():
+            for file_path in block.files:
+                # Check if already cached (peek without probing)
+                cached_dur = channel.durations.peek_duration_sec(
+                    file_path,
+                    default_duration_sec=settings.default_duration_sec
+                )
+                
+                # Now get the actual duration (will probe if not cached)
+                actual_dur = channel.durations.get_duration_sec(
+                    file_path,
+                    default_duration_sec=settings.default_duration_sec
+                )
+                
+                # Track whether we probed (peek returned default) or used cache
+                if cached_dur == settings.default_duration_sec and actual_dur != settings.default_duration_sec:
+                    probed_count += 1
+                else:
+                    cached_count += 1
+                
+                # Progress reporting every 50 files
+                processed = probed_count + cached_count
+                if processed % 50 == 0 or processed == total_files:
+                    print(f"  Progress: {processed}/{total_files} files ({probed_count} probed, {cached_count} cached)")
+    
+    print(f"Duration cache complete: {total_files} total ({probed_count} newly probed, {cached_count} from cache)")
+    print()
+
     inp = KeyboardInput()
     print("LCARSTV dry-run" if args.dry_run else "LCARSTV playback")
     print("Controls: PageUp/Up=Channel Up, PageDown/Down=Channel Down, R=Reset All, Q=Quit")
@@ -145,11 +190,18 @@ def main() -> int:
             call_sign_duration_sec=settings.call_sign_duration_sec,
         )
     
-    # Initialize commercial pool
+    # Initialize commercial catalog for disk-based caching
+    commercial_catalog = CommercialCatalog(
+        path=repo_root / "data" / "commercial_catalog.json",
+        debug=settings.debug,
+    )
+    
+    # Initialize commercial pool with catalog
     commercial_pool = CommercialPool(
         commercials_dir=settings.commercials_dir,
         extensions=settings.extensions,
         debug=settings.debug,
+        catalog=commercial_catalog,
     )
 
     # Throttle auto-advance polling (keep low CPU / low IPC spam).

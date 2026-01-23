@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import random
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .commercial_catalog import CommercialCatalog
 
 
 class CommercialPool:
@@ -15,21 +19,32 @@ class CommercialPool:
     - Handle missing/empty directories gracefully (never throw)
     """
     
-    def __init__(self, commercials_dir: Path | None, extensions: tuple[str, ...], debug: bool = False):
+    def __init__(
+        self,
+        commercials_dir: Path | None,
+        extensions: tuple[str, ...],
+        debug: bool = False,
+        catalog: "CommercialCatalog | None" = None,
+    ):
         """Initialize the commercial pool.
         
         Args:
             commercials_dir: Directory containing commercial media files (or None to disable)
             extensions: Allowed file extensions (e.g., ('.mp4', '.mkv'))
             debug: Enable debug logging
+            catalog: Optional CommercialCatalog for disk-based caching (recommended)
         """
         self.commercials_dir = commercials_dir
         self.extensions = tuple(ext.lower() for ext in extensions)
         self.debug = debug
+        self.catalog = catalog
         self._files: tuple[Path, ...] | None = None
     
     def _load_files(self) -> tuple[Path, ...]:
         """Load commercial files from the configured directory.
+        
+        Uses catalog if available for fast disk-based caching, otherwise falls back
+        to direct filesystem scan (legacy behavior).
         
         Returns:
             Tuple of commercial file paths (empty if directory missing/invalid)
@@ -43,6 +58,25 @@ class CommercialPool:
             self._files = ()
             return self._files
         
+        # Use catalog if available (recommended path)
+        if self.catalog is not None:
+            try:
+                self._files = self.catalog.get_or_scan(
+                    commercials_dir=self.commercials_dir,
+                    extensions=self.extensions,
+                )
+                
+                if self.debug:
+                    print(f"[debug] commercials: loaded {len(self._files)} file(s) from cache")
+                
+                return self._files
+            
+            except Exception as e:
+                # Catalog failed; fall through to legacy scan
+                if self.debug:
+                    print(f"[debug] commercials: catalog failed, falling back to direct scan: {e}")
+        
+        # Legacy path: direct filesystem scan (no caching)
         try:
             if not self.commercials_dir.exists():
                 if self.debug:

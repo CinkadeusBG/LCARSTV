@@ -50,4 +50,5 @@ Thumbs.db
 data/state.json
 data/durations.json
 data/media_catalog.json
+data/commercial_catalog.json
 data/*.tmp
