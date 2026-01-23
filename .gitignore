@@ -49,4 +49,5 @@ Thumbs.db
 # Runtime-generated state/cache (regenerated at runtime)
 data/state.json
 data/durations.json
+data/media_catalog.json
 data/*.tmp

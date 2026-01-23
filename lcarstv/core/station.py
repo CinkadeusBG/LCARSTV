@@ -17,6 +17,7 @@ from .blocks import (
 )
 from .channel import ChannelRuntime
 from .duration_cache import DurationCache
+from .media_catalog import MediaCatalog
 from .models import ChannelState, TuneInfo
 from .scanner import scan_media_dirs
 from .selector import SmartRandomSelector
@@ -88,6 +89,7 @@ class Station:
     ) -> "Station":
         store = StateStore(path=repo_root / "data" / "state.json", debug=settings.debug)
         durations = DurationCache(path=repo_root / "data" / "durations.json", debug=settings.debug)
+        catalog = MediaCatalog(path=repo_root / "data" / "media_catalog.json", debug=settings.debug)
         persisted = store.load()
         selector = SmartRandomSelector(store=store, state=persisted, debug=settings.debug)
         channels: dict[str, ChannelRuntime] = {}
@@ -98,7 +100,12 @@ class Station:
         
         # Build normal channels
         for ch in normal_channels:
-            scan = scan_media_dirs(repo_root, ch.media_dirs, settings.extensions)
+            scan = catalog.get_or_scan(
+                call_sign=ch.call_sign,
+                repo_root=repo_root,
+                media_dirs=ch.media_dirs,
+                extensions=settings.extensions,
+            )
             if not scan.files:
                 # Keep deterministic, but allow boot without media present.
                 # A real deployment will have media files.
@@ -256,6 +263,7 @@ class Station:
                 state=state,
                 durations=durations,
                 sequential_playthrough=ch.sequential_playthrough,
+                catalog=catalog,
             )
         
         # Build aggregate channels
@@ -407,6 +415,7 @@ class Station:
                 sequential_playthrough=False,  # Aggregate channels don't use sequential mode directly
                 is_aggregate=True,
                 aggregate_source_infos=aggregate_source_infos,
+                catalog=catalog,
             )
 
         call_signs = channels_cfg.ordered_call_signs()

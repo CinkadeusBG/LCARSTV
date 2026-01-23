@@ -11,6 +11,11 @@ from .models import ChannelState
 from .selector import SmartRandomSelector
 from .state_store import StateStore
 
+# Forward declaration to avoid circular import
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .media_catalog import MediaCatalog
+
 
 @dataclass
 class ChannelRuntime:
@@ -26,6 +31,7 @@ class ChannelRuntime:
     sequential_playthrough: bool = False
     is_aggregate: bool = False
     aggregate_source_infos: dict[str, dict] | None = None
+    catalog: "MediaCatalog | None" = None
 
     def get_current_block(self) -> Block:
         if self.state.current_block_id not in self.blocks_by_id:
@@ -109,6 +115,30 @@ class ChannelRuntime:
         # We avoid probing the entire library at startup, but for correct schedule math
         # we need accurate durations for whatever is currently airing.
         try:
+            # Check if any files in the block don't exist (stale catalog)
+            missing_files = [p for p in block.files if not p.exists()]
+            if missing_files and self.catalog is not None:
+                # Cached file(s) don't exist - invalidate catalog and trigger rescan
+                import sys
+                print(
+                    f"[WARNING] {self.call_sign}: detected missing file(s) from cached catalog. "
+                    f"Invalidating catalog and triggering rescan...",
+                    file=sys.stderr
+                )
+                for missing in missing_files[:3]:  # Show first 3
+                    print(f"  Missing: {missing}", file=sys.stderr)
+                if len(missing_files) > 3:
+                    print(f"  ... and {len(missing_files) - 3} more", file=sys.stderr)
+                
+                # Invalidate the catalog for this channel
+                self.catalog.invalidate_channel(self.call_sign)
+                
+                # Raise exception to signal that a rescan is needed
+                raise FileNotFoundError(
+                    f"{self.call_sign}: catalog contained {len(missing_files)} missing file(s). "
+                    f"Catalog invalidated. Please restart the application to rescan."
+                )
+            
             new_durs = tuple(
                 float(
                     self.durations.get_duration_sec(
@@ -127,6 +157,9 @@ class ChannelRuntime:
                     total_duration_sec=total,
                 )
                 self.blocks_by_id[self.state.current_block_id] = block
+        except FileNotFoundError:
+            # Re-raise FileNotFoundError (catalog invalidation case)
+            raise
         except Exception:
             # Best-effort: schedule math will fall back to whatever durations we had.
             pass
