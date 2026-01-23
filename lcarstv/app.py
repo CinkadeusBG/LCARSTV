@@ -153,9 +153,9 @@ def main() -> int:
     )
 
     # Throttle auto-advance polling (keep low CPU / low IPC spam).
-    # Increased from 0.2s to 0.4s to reduce IPC overhead during long-running sessions.
+    # Increased from 0.2s -> 0.4s -> 1.0s to reduce IPC overhead and improve button responsiveness.
     last_auto_poll = 0.0
-    auto_poll_interval = 0.4
+    auto_poll_interval = 1.0
     last_auto_advanced_from: str | None = None
 
     def _norm_path(p: str | None) -> str | None:
@@ -173,6 +173,14 @@ def main() -> int:
     episode_metadata: dict | None = None
     handled_break_indices: set[int] = set()
     in_commercial_break: bool = False
+    
+    # Metadata cache: avoid re-reading JSON files every poll cycle
+    # Key: normalized file path, Value: parsed metadata dict or None
+    episode_metadata_cache: dict[str, dict | None] = {}
+    
+    # Break check optimization: only check breaks every N seconds (not every poll)
+    last_break_check_time: float = 0.0
+    break_check_interval: float = 2.0  # Check every 2 seconds instead of 1.0s
     
     def _play_commercials(count: int = 3) -> InputEvent | None:
         """Play a sequence of random commercials.
@@ -247,12 +255,18 @@ def main() -> int:
     def _check_and_handle_breaks() -> tuple[bool, InputEvent | None]:
         """Check if we need to interrupt playback for an in-episode commercial break.
         
+        Optimized to:
+        - Use metadata cache (avoid re-reading JSON every call)
+        - Throttle checks to every 2 seconds
+        - Early-exit when far from any break (30s lookahead window)
+        
         Returns:
             Tuple of (break_was_handled, interrupted_event)
             - break_was_handled: True if a break was played (even if interrupted)
             - interrupted_event: InputEvent if user interrupted, None otherwise
         """
         nonlocal current_episode_path, episode_metadata, handled_break_indices, in_commercial_break
+        nonlocal last_break_check_time, episode_metadata_cache
         
         if player is None:
             return (False, None)
@@ -274,15 +288,31 @@ def main() -> int:
         
         current_media_norm = _norm_path(current_media)
         
-        # Get current playback position (needed for both new episode detection and break checking)
-        time_pos = player._get_float_property("time-pos")
-        
         # Check if we switched to a new episode
         if current_episode_path != current_media_norm:
-            # New episode: load metadata and reset break tracking
+            # New episode: load metadata from cache or disk and reset break tracking
             current_episode_path = current_media_norm
-            episode_metadata = load_episode_metadata(Path(current_media))
+            
+            # Check cache first
+            if current_media_norm in episode_metadata_cache:
+                episode_metadata = episode_metadata_cache[current_media_norm]
+            else:
+                # Not in cache: load from disk and cache it
+                episode_metadata = load_episode_metadata(Path(current_media))
+                episode_metadata_cache[current_media_norm] = episode_metadata
+                
+                # Limit cache size to prevent unbounded memory growth
+                if len(episode_metadata_cache) > 100:
+                    # Remove oldest entries (first 20)
+                    keys_to_remove = list(episode_metadata_cache.keys())[:20]
+                    for k in keys_to_remove:
+                        episode_metadata_cache.pop(k, None)
+            
             handled_break_indices = set()
+            last_break_check_time = 0.0  # Force immediate check for new episode
+            
+            # Get time-pos for initial break marking
+            time_pos = player._get_float_property("time-pos")
             
             # Mark breaks that are already past as handled (prevent retroactive triggers when tuning mid-episode)
             if episode_metadata is not None and time_pos is not None:
@@ -310,11 +340,35 @@ def main() -> int:
         if not breaks:
             return (False, None)
         
-        # time_pos was already retrieved above - check if it's valid
+        # Throttle: only check breaks every N seconds (not every main loop poll)
+        current_time = time.time()
+        if current_time - last_break_check_time < break_check_interval:
+            return (False, None)
+        
+        last_break_check_time = current_time
+        
+        # Get current playback position
+        time_pos = player._get_float_property("time-pos")
         if time_pos is None:
             return (False, None)
         
-        # Check each break window
+        # Early-exit optimization: check if we're far from ANY unhandled break
+        # Only do detailed checking if we're within 30s of a break start
+        lookahead_window = 30.0
+        near_any_break = False
+        for i, brk in enumerate(breaks):
+            if i in handled_break_indices:
+                continue
+            start = float(brk["start"])
+            if time_pos >= (start - lookahead_window):
+                near_any_break = True
+                break
+        
+        if not near_any_break:
+            # Far from any breaks; skip expensive checking
+            return (False, None)
+        
+        # We're near a break; check each break window
         for i, brk in enumerate(breaks):
             # Skip already-handled breaks
             if i in handled_break_indices:
