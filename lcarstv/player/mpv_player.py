@@ -705,7 +705,7 @@ class MpvPlayer:
             # Optional but helpful for kiosk/fullscreen setups.
             "--no-border",
             "--idle=yes",
-            "--force-window=no",
+            "--force-window=yes",
             "--no-terminal",
             f"--input-ipc-server={self.pipe_path}",
             "--audio-display=no",
@@ -714,7 +714,7 @@ class MpvPlayer:
             # - Ensure mpv never auto-loads external subs.
             "--sid=no",
             "--sub-auto=no",
-            "--keep-open=no",
+            "--keep-open=yes",
         ]
 
         if self.debug:
