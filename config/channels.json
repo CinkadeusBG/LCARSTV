@@ -47,7 +47,7 @@
     {
       "call_sign": "WMIX",
       "label": "All Trek Mix",
-      "aggregate_from_channels": ["KTOS", "WTNG", "KDSN", "KVOY", "WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "KSBY", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ"],
+      "aggregate_from_channels": ["WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "KSBY", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ"],
       "show_commercials": true,
       "cooldown": 0
     },
@@ -148,6 +148,15 @@
       "extensions": [".mkv", ".mp4", ".avi"],
       "show_commercials": true,
       "cooldown": 10,
+      "sequential_playthrough": false
+    },
+    {
+      "call_sign": "TWC",
+      "label": "The Weather Channel",
+      "media_dirs": ["Z:/media/TWC"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": false,
+      "cooldown": 1,
       "sequential_playthrough": false
     }
   ]
