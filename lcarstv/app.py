@@ -452,6 +452,28 @@ def main() -> int:
                 
                 player.play(current_media, end)
                 
+                # CRITICAL FIX: Update channel's started_at to reflect the resume position
+                # Without this, the channel's elapsed time calculation will be wrong,
+                # causing premature auto-advance to the next episode.
+                #
+                # Calculate the total time elapsed in the current block up to the resume point.
+                # For multi-file blocks, this includes all files before the current one.
+                resumed_at = now_utc()
+                block = active_chan.get_current_block()
+                pb = active_chan.scheduled_playback(resumed_at)
+                
+                # Total elapsed in block = (files before current) + (offset in current file)
+                time_in_block = sum(block.durations_sec[:pb.file_index]) + end
+                
+                # Update started_at so that: resumed_at - started_at = time_in_block
+                active_chan.state.started_at = resumed_at - timedelta(seconds=time_in_block)
+                
+                # Persist the corrected state
+                active_chan._persist_live_state()
+                
+                if settings.debug:
+                    print(f"[debug] commercials: updated started_at to {active_chan.state.started_at.isoformat()} (time_in_block={time_in_block:.2f}s)")
+                
                 # Set a guard to prevent immediate re-triggers
                 player.set_playback_guard(seconds=1.0, reason="COMMERCIAL_BREAK")
                 
