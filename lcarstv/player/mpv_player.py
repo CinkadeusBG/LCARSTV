@@ -826,6 +826,22 @@ class MpvPlayer:
         self._wait_for_media_ready(timeout_sec=2.0, poll_interval_sec=0.05)
         self._best_effort_seek(start_sec, retries=10, delay_sec=0.05)
 
+        # CRITICAL: Explicitly unpause playback after loading a new file.
+        # mpv's --keep-open=yes flag causes it to pause on the last frame of a video.
+        # When we load a new file (e.g., resuming episode after commercials), mpv may
+        # inherit the paused state, causing the new file to load but not play.
+        # Setting pause=false ensures playback always starts.
+        try:
+            cmd = self._ipc.trace_command if self.ipc_trace else self._ipc.command
+            resp = cmd("set_property", "pause", False, timeout_sec=2.0)
+            if resp.get("error") not in (None, "success"):
+                if self.debug:
+                    print(f"[debug] mpv: unpause failed (non-fatal): {resp}")
+        except Exception as e:
+            # Best-effort: log but don't crash if unpause fails
+            if self.debug:
+                print(f"[debug] mpv: unpause exception (non-fatal): {e}")
+
         # Guard window after load+seek to avoid transient end triggers.
         self.set_playback_guard(seconds=0.75, reason="LOAD_SEEK")
 
