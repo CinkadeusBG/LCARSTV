@@ -46,7 +46,7 @@
     },
     {
       "call_sign": "WMIX",
-      "label": "All Trek Mix",
+      "label": "Mix Channel",
       "aggregate_from_channels": ["WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "KSBY", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ"],
       "show_commercials": true,
       "cooldown": 0
