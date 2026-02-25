@@ -752,7 +752,7 @@ def main() -> int:
                     last_tvg_refresh = t
                     
                     # Collect guide data
-                    guide_data = station.get_guide_data(now)
+                    guide_data = station.get_guide_data(now, channels_cfg)
                     
                     # Display on TV screen via MPV OSD
                     if player is not None:

@@ -136,7 +136,8 @@
       "extensions": [".mkv", ".mp4", ".avi"],
       "show_commercials": false,
       "cooldown": 1,
-      "sequential_playthrough": false
+      "sequential_playthrough": false,
+      "exclude_from_guide": true
     },
     {
       "call_sign": "TVG",
@@ -145,7 +146,8 @@
       "extensions": [".mkv", ".mp4", ".avi"],
       "show_commercials": false,
       "cooldown": 0,
-      "sequential_playthrough": false
+      "sequential_playthrough": false,
+      "exclude_from_guide": true
     }
   ]
 }

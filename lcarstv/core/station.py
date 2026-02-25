@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
+import re
 
 import random
 
@@ -22,6 +23,98 @@ from .models import ChannelState, TuneInfo
 from .scanner import scan_media_dirs
 from .selector import SmartRandomSelector
 from .state_store import PersistedChannel, StateStore
+
+
+def parse_episode_title(filename: str) -> str:
+    """Parse a media filename and format it as 'SxxExx - Episode Name' or clean title.
+    
+    Handles various filename patterns:
+    - Dot-separated: Star.Trek.TOS.S01E01.The.Man.Trap.720p...
+    - Space-separated: Family Ties S01E05 I Never Killed for My Father
+    - Movies (no SxxExx): Star.Trek.II.The.Wrath.of.Khan.1982...
+    
+    Args:
+        filename: The media filename (without path, with or without extension)
+    
+    Returns:
+        Formatted string like "S01E01 - Episode Name" or cleaned movie title
+    """
+    # Remove file extension
+    name = Path(filename).stem
+    
+    # Try to extract SxxExx pattern (case insensitive)
+    # Matches: S01E01, s02e05, S03E18-E19, etc.
+    season_ep_match = re.search(r'[Ss](\d{1,2})[Ee](\d{1,2})(?:-[Ee](\d{1,2}))?', name)
+    
+    if season_ep_match:
+        # TV series episode found
+        season = season_ep_match.group(1)
+        episode = season_ep_match.group(2)
+        episode_end = season_ep_match.group(3)
+        
+        # Format as S01E01 or S01E01-E02
+        if episode_end:
+            season_ep_str = f"S{season.zfill(2)}E{episode.zfill(2)}-E{episode_end.zfill(2)}"
+        else:
+            season_ep_str = f"S{season.zfill(2)}E{episode.zfill(2)}"
+        
+        # Extract episode name (everything after SxxExx)
+        episode_name_part = name[season_ep_match.end():]
+        
+        # Clean up the episode name
+        # Remove quality markers and codec info
+        quality_patterns = [
+            r'\b(720p|1080p|480p|2160p|4k)\b',
+            r'\b(BRrip|BrRip|BluRay|WEB-?DL|HDTV|DVDRip)\b',
+            r'\b(x264|x265|h264|h265|HEVC|XviD)\b',
+            r'\b(AAC|AC3|DTS|MP3)\b',
+            r'\[.*?\]',  # Remove bracketed content like [MULVAcoded]
+            r'\(.*?codec.*?\)',  # Remove codec info in parens
+            r'-.*?(YIFY|RARBG|YTS|ETRG).*$',  # Remove release group suffixes
+        ]
+        
+        for pattern in quality_patterns:
+            episode_name_part = re.sub(pattern, '', episode_name_part, flags=re.IGNORECASE)
+        
+        # Replace dots and underscores with spaces
+        episode_name_part = episode_name_part.replace('.', ' ').replace('_', ' ')
+        
+        # Clean up whitespace and strip leading separators
+        episode_name_part = ' '.join(episode_name_part.split())
+        episode_name_part = episode_name_part.lstrip(' -.')
+        
+        # If we have a name, format it; otherwise just show SxxExx
+        if episode_name_part:
+            return f"{season_ep_str} - {episode_name_part}"
+        else:
+            return season_ep_str
+    
+    else:
+        # No SxxExx found - treat as movie or special
+        # Clean up the full filename
+        clean_name = name
+        
+        # Remove quality markers and codec info
+        quality_patterns = [
+            r'\b(720p|1080p|480p|2160p|4k)\b',
+            r'\b(BRrip|BrRip|BluRay|WEB-?DL|HDTV|DVDRip)\b',
+            r'\b(x264|x265|h264|h265|HEVC|XviD)\b',
+            r'\b(AAC|AC3|DTS|MP3)\b',
+            r'\b\d{4}\b',  # Remove years like 1982, 1996
+            r'\[.*?\]',
+            r'-.*?(YIFY|RARBG|YTS|ETRG).*$',
+        ]
+        
+        for pattern in quality_patterns:
+            clean_name = re.sub(pattern, '', clean_name, flags=re.IGNORECASE)
+        
+        # Replace dots and underscores with spaces
+        clean_name = clean_name.replace('.', ' ').replace('_', ' ')
+        
+        # Clean up whitespace
+        clean_name = ' '.join(clean_name.split())
+        
+        return clean_name if clean_name else filename
 
 
 @dataclass
@@ -536,19 +629,25 @@ class Station:
             position_sec=pos,
         )
 
-    def get_guide_data(self, now: datetime) -> list[dict]:
+    def get_guide_data(self, now: datetime, channels_cfg: ChannelsConfig) -> list[dict]:
         """Collect current playback info for all channels (for TVG display).
+        
+        Args:
+            now: Current datetime
+            channels_cfg: Channel configuration (needed for exclude_from_guide flag)
         
         Returns list of dicts with:
         - call_sign: str
-        - episode: str (file name)
+        - episode: str (formatted as 'SxxExx - Episode Name' or clean title)
         - percent_complete: float
         """
         guide_data = []
-        exclude = {"TWC", "TVG"}  # Exclude weather and guide itself
+        channel_configs = channels_cfg.by_call_sign()
         
         for call_sign in self.call_signs:
-            if call_sign in exclude:
+            # Check if this channel should be excluded from the guide
+            cfg = channel_configs.get(call_sign)
+            if cfg and cfg.exclude_from_guide:
                 continue
                 
             chan = self.channels.get(call_sign)
@@ -565,9 +664,12 @@ class Station:
                 percent = (elapsed / total * 100.0) if total > 0 else 0.0
                 percent = min(100.0, max(0.0, percent))  # Clamp 0-100
                 
+                # Parse and format the episode title
+                formatted_title = parse_episode_title(pb.file_path.name)
+                
                 guide_data.append({
                     "call_sign": call_sign,
-                    "episode": pb.file_path.name,
+                    "episode": formatted_title,
                     "percent_complete": percent
                 })
             except Exception:

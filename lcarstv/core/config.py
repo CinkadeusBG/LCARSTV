@@ -61,6 +61,7 @@ class ChannelConfig:
     sequential_playthrough: bool = False
     aggregate_from_channels: tuple[str, ...] | None = None
     show_commercials: bool = False
+    exclude_from_guide: bool = False
 
 
 @dataclass(frozen=True)
@@ -135,6 +136,9 @@ def load_channels_config(path: Path) -> ChannelsConfig:
         # Commercial playback support
         show_commercials = bool(ch.get("show_commercials", False))
         
+        # TV Guide exclusion
+        exclude_from_guide = bool(ch.get("exclude_from_guide", False))
+        
         # Validation: aggregate channels should not have media_dirs
         if aggregate_from_channels is not None:
             if media_dirs:
@@ -153,6 +157,7 @@ def load_channels_config(path: Path) -> ChannelsConfig:
                 sequential_playthrough=sequential_playthrough,
                 aggregate_from_channels=aggregate_from_channels,
                 show_commercials=show_commercials,
+                exclude_from_guide=exclude_from_guide,
             )
         )
     if not chans:
