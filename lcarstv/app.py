@@ -525,6 +525,10 @@ def main() -> int:
                 print("Exiting.")
                 return 0
             if evt.kind == "channel_up":
+                # Clear TVG overlay if leaving TVG channel
+                if player is not None and station.active_call_sign == "TVG":
+                    player.clear_tvg_guide_osd()
+                
                 # Reset commercial state when changing channels
                 current_episode_path = None
                 episode_metadata = None
@@ -533,6 +537,10 @@ def main() -> int:
                 if player is not None:
                     player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
             if evt.kind == "channel_down":
+                # Clear TVG overlay if leaving TVG channel
+                if player is not None and station.active_call_sign == "TVG":
+                    player.clear_tvg_guide_osd()
+                
                 # Reset commercial state when changing channels
                 current_episode_path = None
                 episode_metadata = None
@@ -734,7 +742,7 @@ def main() -> int:
                         suppress_until_time = time.time() + 0.5
                         awaiting_mpv_path = _norm_path(expected_file)
             
-            # TVG (TV Guide) channel: display and periodically refresh the guide
+            # TVG (TV Guide) channel: display and periodically refresh the guide on TV screen
             if station.active_call_sign == "TVG":
                 now = now_utc()
                 t = time.time()
@@ -743,13 +751,17 @@ def main() -> int:
                 if t - last_tvg_refresh >= tvg_refresh_interval:
                     last_tvg_refresh = t
                     
-                    # Clear console (works on both Windows and Linux)
-                    os.system('cls' if os.name == 'nt' else 'clear')
-                    
-                    # Collect and display guide data
+                    # Collect guide data
                     guide_data = station.get_guide_data(now)
-                    guide_display = format_tvg_display(guide_data)
-                    print(guide_display)
+                    
+                    # Display on TV screen via MPV OSD
+                    if player is not None:
+                        player.show_tvg_guide_osd(guide_data)
+                    
+                    # Also print to console for debugging/SSH viewing
+                    if settings.debug:
+                        guide_display = format_tvg_display(guide_data)
+                        print(guide_display)
 
             # low CPU polling loop; no threads.
             time.sleep(0.05)

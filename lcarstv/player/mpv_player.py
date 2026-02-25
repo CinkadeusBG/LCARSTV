@@ -88,6 +88,9 @@ class MpvPlayer:
 
     # mpv OSD overlay id reserved for the call-sign.
     _call_sign_overlay_id: int = 4242
+    
+    # mpv OSD overlay id reserved for the TV guide.
+    _tvg_overlay_id: int = 4243
 
     # Active timer for clearing call-sign OSD (prevent thread accumulation).
     _call_sign_timer: threading.Timer | None = None
@@ -238,6 +241,82 @@ class MpvPlayer:
             t.start()
             # Store reference so we can cancel it if a new overlay is requested.
             self._call_sign_timer = t
+
+    def show_tvg_guide_osd(self, guide_data: list[dict]) -> None:
+        """Show the TV guide on mpv's OSD using ASS formatting.
+        
+        Args:
+            guide_data: List of dicts with keys: call_sign, episode, percent_complete
+        """
+        if self._ipc is None:
+            return
+        
+        if not guide_data:
+            # If no data, clear the overlay
+            try:
+                self._ipc.command("osd-overlay", self._tvg_overlay_id, "none", "", timeout_sec=2.0)
+            except Exception:
+                pass
+            return
+        
+        # Build the guide text
+        lines = []
+        lines.append("TV GUIDE")
+        lines.append("=" * 60)
+        
+        for item in guide_data:
+            channel = item.get("call_sign", "")
+            episode = item.get("episode", "")
+            percent = item.get("percent_complete", 0.0)
+            
+            # Truncate long episode names
+            if len(episode) > 35:
+                episode = episode[:32] + "..."
+            
+            # Format: "CHANNEL  | Episode Name           | 54%"
+            line = f"{channel:<8} | {episode:<35} | {percent:>3.0f}%"
+            lines.append(line)
+        
+        lines.append("=" * 60)
+        lines.append("Press Channel Up/Down to exit")
+        
+        guide_text = "\\N".join(lines)  # \N is ASS line break
+        
+        # ASS formatting:
+        # - \an7: top-left alignment
+        # - \fs: font size
+        # - \fn: monospace font
+        # - \1c: white text
+        # - \3a&HFF&: fully transparent outline (no visible border)
+        # - \4a&H00&: opaque shadow/background
+        # - \bord0: no border
+        # - \shad2: shadow for background effect
+        
+        font_size = 24
+        
+        # Position near top-left with some margin
+        pos_x = 50
+        pos_y = 50
+        
+        ass_text = (
+            rf"{{\an7\pos({pos_x},{pos_y})\fs{font_size}\fn{{monospace}}"
+            rf"\1c&HFFFFFF&\3c&H000000&\bord2\shad0}}{guide_text}"
+        )
+        
+        try:
+            self._ipc.command("osd-overlay", self._tvg_overlay_id, "ass-events", ass_text, timeout_sec=2.0)
+        except Exception as e:
+            if self.debug:
+                print(f"[debug] osd: failed to show TVG guide: {e}")
+    
+    def clear_tvg_guide_osd(self) -> None:
+        """Clear the TV guide overlay from the screen."""
+        if self._ipc is None:
+            return
+        try:
+            self._ipc.command("osd-overlay", self._tvg_overlay_id, "none", "", timeout_sec=2.0)
+        except Exception:
+            pass
 
     def _wait_for_media_ready(self, *, timeout_sec: float = 2.0, poll_interval_sec: float = 0.05) -> bool:
         """Wait until mpv has loaded enough metadata that seeking should work.
