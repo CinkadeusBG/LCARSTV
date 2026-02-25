@@ -16,6 +16,7 @@ from lcarstv.core.station import Station
 from lcarstv.input.keyboard import KeyboardInput
 from lcarstv.input.keys import InputEvent
 from lcarstv.player import MpvPlayer
+from lcarstv.ui import TVGuideRenderer
 
 
 def format_tvg_display(guide_data: list[dict]) -> str:
@@ -263,6 +264,12 @@ def main() -> int:
     # TVG (TV Guide) refresh tracking
     last_tvg_refresh: float = 0.0
     tvg_refresh_interval: float = 3.0  # Refresh guide every 3 seconds
+    tvg_scroll_offset: float = 0.0  # Scroll position in rows
+    tvg_scroll_speed: float = 0.5  # Rows to scroll per refresh (slow 90s scroll)
+    
+    # Initialize TV Guide renderer
+    tvg_renderer = TVGuideRenderer(width=1920, height=1080, debug=settings.debug)
+    tvg_image_path = repo_root / "data" / "tvguide.png"
     
     def _play_commercials(count: int = 3) -> InputEvent | None:
         """Play a sequence of random commercials.
@@ -519,7 +526,7 @@ def main() -> int:
             player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
 
         def _handle_input_event(evt: InputEvent) -> int | None:
-            nonlocal current_episode_path, episode_metadata, handled_break_indices
+            nonlocal current_episode_path, episode_metadata, handled_break_indices, tvg_scroll_offset
             
             if evt.kind == "quit":
                 print("Exiting.")
@@ -534,6 +541,11 @@ def main() -> int:
                 episode_metadata = None
                 handled_break_indices = set()
                 info = station.channel_up(now_utc())
+                
+                # Reset TVG scroll when entering TVG channel
+                if station.active_call_sign == "TVG":
+                    tvg_scroll_offset = 0.0
+                
                 if player is not None:
                     player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
             if evt.kind == "channel_down":
@@ -546,6 +558,11 @@ def main() -> int:
                 episode_metadata = None
                 handled_break_indices = set()
                 info = station.channel_down(now_utc())
+                
+                # Reset TVG scroll when entering TVG channel
+                if station.active_call_sign == "TVG":
+                    tvg_scroll_offset = 0.0
+                
                 if player is not None:
                     player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
             if evt.kind == "reset_all":
@@ -742,7 +759,7 @@ def main() -> int:
                         suppress_until_time = time.time() + 0.5
                         awaiting_mpv_path = _norm_path(expected_file)
             
-            # TVG (TV Guide) channel: display and periodically refresh the guide on TV screen
+            # TVG (TV Guide) channel: generate and display graphical guide with smooth scrolling
             if station.active_call_sign == "TVG":
                 now = now_utc()
                 t = time.time()
@@ -754,9 +771,38 @@ def main() -> int:
                     # Collect guide data
                     guide_data = station.get_guide_data(now, channels_cfg)
                     
-                    # Display on TV screen via MPV OSD
-                    if player is not None:
-                        player.show_tvg_guide_osd(guide_data)
+                    # Advance scroll offset (wraps around)
+                    if len(guide_data) > 0:
+                        tvg_scroll_offset += tvg_scroll_speed
+                        # Wrap around when we've scrolled past all channels
+                        if tvg_scroll_offset >= len(guide_data):
+                            tvg_scroll_offset = 0.0
+                    
+                    # Generate PNG image with 90s graphics and scrolling
+                    try:
+                        # Convert UTC time to local time for display
+                        from datetime import timezone, timedelta as td
+                        # CST is UTC-6
+                        cst_offset = td(hours=-6)
+                        cst_tz = timezone(cst_offset, name="CST")
+                        local_time = now.replace(tzinfo=timezone.utc).astimezone(cst_tz)
+                        
+                        tvg_renderer.render_to_file(
+                            guide_data, 
+                            tvg_image_path, 
+                            current_time=local_time,
+                            scroll_offset=tvg_scroll_offset
+                        )
+                        
+                        # ALWAYS reload the image in mpv to show scrolling animation
+                        # mpv doesn't auto-detect file changes, so we must explicitly reload
+                        if player is not None and tvg_image_path.exists():
+                            # Force reload every refresh to show new scroll position
+                            player.play(str(tvg_image_path), 0.0)
+                    except Exception as e:
+                        # Fallback to console output if rendering fails
+                        if settings.debug:
+                            print(f"[debug] tvguide: failed to render PNG: {e}")
                     
                     # Also print to console for debugging/SSH viewing
                     if settings.debug:
