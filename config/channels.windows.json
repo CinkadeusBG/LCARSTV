@@ -1,5 +1,5 @@
 {
-  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV", "WMIX", "WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "KSBY", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ"],
+  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV", "WMIX", "WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ"],
 
   "channels": [
     {
@@ -45,7 +45,7 @@
     {
       "call_sign": "WMIX",
       "label": "All Trek Mix",
-      "aggregate_from_channels": ["WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "KSBY", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ"],
+      "aggregate_from_channels": ["WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ"],
       "show_commercials": true,
       "cooldown": 0
     },
@@ -85,14 +85,6 @@
       "call_sign": "KQLP",
       "label": "Quantum Leap",
       "media_dirs": ["Z:/media/KQLP"],
-      "extensions": [".mkv", ".mp4", ".avi"],
-      "show_commercials": true,
-      "cooldown": 10
-    },
-    {
-      "call_sign": "KSBY",
-      "label": "The Cosby Show",
-      "media_dirs": ["Z:/media/KSBY"],
       "extensions": [".mkv", ".mp4", ".avi"],
       "show_commercials": true,
       "cooldown": 10
