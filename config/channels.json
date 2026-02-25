@@ -1,5 +1,5 @@
 {
-  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV", "WMIX", "WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ"],
+  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV", "WMIX", "WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ", "TVG"],
 
   "channels": [
     {
@@ -148,6 +148,15 @@
       "extensions": [".mkv", ".mp4", ".avi"],
       "show_commercials": false,
       "cooldown": 1,
+      "sequential_playthrough": false
+    },
+    {
+      "call_sign": "TVG",
+      "label": "TV Guide",
+      "media_dirs": ["Z:/media/TVG"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": false,
+      "cooldown": 0,
       "sequential_playthrough": false
     }
   ]

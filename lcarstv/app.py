@@ -18,6 +18,31 @@ from lcarstv.input.keys import InputEvent
 from lcarstv.player import MpvPlayer
 
 
+def format_tvg_display(guide_data: list[dict]) -> str:
+    """Format guide data as a text table."""
+    lines = []
+    lines.append("=" * 90)
+    lines.append("TV GUIDE - LCARSTV")
+    lines.append("=" * 90)
+    lines.append(f"{'Channel':<20} | {'Episode':<50} | {'Progress':>10}")
+    lines.append("-" * 90)
+    
+    for item in guide_data:
+        channel = item["call_sign"]
+        episode = item["episode"]
+        # Truncate long episode names
+        if len(episode) > 50:
+            episode = episode[:47] + "..."
+        percent = item["percent_complete"]
+        
+        lines.append(f"{channel:<20} | {episode:<50} | {percent:>9.0f}%")
+    
+    lines.append("=" * 90)
+    lines.append("Press Channel Up/Down to exit guide")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="lcarstv")
     default_profile = "windows" if os.name == "nt" else "pi"
@@ -234,6 +259,10 @@ def main() -> int:
     # Break check optimization: only check breaks every N seconds (not every poll)
     last_break_check_time: float = 0.0
     break_check_interval: float = 2.0  # Check every 2 seconds instead of 1.0s
+    
+    # TVG (TV Guide) refresh tracking
+    last_tvg_refresh: float = 0.0
+    tvg_refresh_interval: float = 3.0  # Refresh guide every 3 seconds
     
     def _play_commercials(count: int = 3) -> InputEvent | None:
         """Play a sequence of random commercials.
@@ -704,6 +733,23 @@ def main() -> int:
                         # Suppress retriggers while mpv transitions back.
                         suppress_until_time = time.time() + 0.5
                         awaiting_mpv_path = _norm_path(expected_file)
+            
+            # TVG (TV Guide) channel: display and periodically refresh the guide
+            if station.active_call_sign == "TVG":
+                now = now_utc()
+                t = time.time()
+                
+                # Refresh the guide display every N seconds
+                if t - last_tvg_refresh >= tvg_refresh_interval:
+                    last_tvg_refresh = t
+                    
+                    # Clear console (works on both Windows and Linux)
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    
+                    # Collect and display guide data
+                    guide_data = station.get_guide_data(now)
+                    guide_display = format_tvg_display(guide_data)
+                    print(guide_display)
 
             # low CPU polling loop; no threads.
             time.sleep(0.05)

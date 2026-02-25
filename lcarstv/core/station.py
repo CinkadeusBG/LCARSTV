@@ -536,6 +536,46 @@ class Station:
             position_sec=pos,
         )
 
+    def get_guide_data(self, now: datetime) -> list[dict]:
+        """Collect current playback info for all channels (for TVG display).
+        
+        Returns list of dicts with:
+        - call_sign: str
+        - episode: str (file name)
+        - percent_complete: float
+        """
+        guide_data = []
+        exclude = {"TWC", "TVG"}  # Exclude weather and guide itself
+        
+        for call_sign in self.call_signs:
+            if call_sign in exclude:
+                continue
+                
+            chan = self.channels.get(call_sign)
+            if chan is None:
+                continue
+            
+            try:
+                # Get current playback info (read-only, no state changes)
+                pb = chan.scheduled_playback(now)
+                elapsed = chan.state.elapsed_sec(now)
+                block = chan.get_current_block()
+                total = float(block.total_duration_sec)
+                
+                percent = (elapsed / total * 100.0) if total > 0 else 0.0
+                percent = min(100.0, max(0.0, percent))  # Clamp 0-100
+                
+                guide_data.append({
+                    "call_sign": call_sign,
+                    "episode": pb.file_path.name,
+                    "percent_complete": percent
+                })
+            except Exception:
+                # Best-effort: skip channels that fail
+                continue
+        
+        return guide_data
+
     def reset_all_channels(self, now: datetime) -> TuneInfo:
         """Reset all channels to fresh state with new random positions.
 
