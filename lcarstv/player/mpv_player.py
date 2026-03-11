@@ -958,3 +958,49 @@ class MpvPlayer:
         """
 
         return self._get_str_property("path")
+
+    def get_chapter_list(self) -> list[float]:
+        """Return the start times (in seconds) of all chapters in the current media.
+
+        Queries mpv's `chapter-list` property.  Chapter 0 always starts at t=0
+        (the very beginning of the file) so it is excluded from the returned list —
+        only chapters 1..N are returned, since those are the act-break timestamps
+        where commercials should be inserted.
+
+        Returns:
+            Sorted list of chapter start times in seconds (may be empty if the
+            file has no chapters, fewer than 2 chapters, or mpv is not ready).
+
+        Notes:
+        - Never raises exceptions (returns [] on any error).
+        - Should be called after the media is loaded and seekable (i.e. after
+          `_wait_for_media_ready()` has returned True).
+        """
+        if self._ipc is None:
+            return []
+
+        try:
+            resp = self._ipc.command("get_property", "chapter-list", timeout_sec=2.0)
+        except Exception:
+            return []
+
+        if resp.get("error") not in (None, "success"):
+            return []
+
+        data = resp.get("data")
+        if not isinstance(data, list):
+            return []
+
+        times: list[float] = []
+        for i, chapter in enumerate(data):
+            if not isinstance(chapter, dict):
+                continue
+            # Skip chapter 0 — it is always the very start of the file (t≈0).
+            if i == 0:
+                continue
+            time_val = chapter.get("time")
+            if isinstance(time_val, (int, float)) and time_val > 0:
+                times.append(float(time_val))
+
+        times.sort()
+        return times

@@ -7,7 +7,6 @@ import queue
 from datetime import timedelta
 from pathlib import Path
 
-from lcarstv.core.blocks import load_episode_metadata
 from lcarstv.core.clock import now_utc
 from lcarstv.core.commercial_catalog import CommercialCatalog
 from lcarstv.core.commercials import CommercialPool
@@ -223,13 +222,9 @@ def main() -> int:
     
     # Commercial playback state tracking
     current_episode_path: str | None = None
-    episode_metadata: dict | None = None
+    episode_break_times: list[float] = []  # Chapter timestamps from the current episode
     handled_break_indices: set[int] = set()
     in_commercial_break: bool = False
-    
-    # Metadata cache: avoid re-reading JSON files every poll cycle
-    # Key: normalized file path, Value: parsed metadata dict or None
-    episode_metadata_cache: dict[str, dict | None] = {}
     
     # Break check optimization: only check breaks every N seconds (not every poll)
     last_break_check_time: float = 0.0
@@ -306,180 +301,157 @@ def main() -> int:
         return None
     
     def _check_and_handle_breaks() -> tuple[bool, InputEvent | None]:
-        """Check if we need to interrupt playback for an in-episode commercial break.
-        
-        Optimized to:
-        - Use metadata cache (avoid re-reading JSON every call)
-        - Throttle checks to every 2 seconds
-        - Early-exit when far from any break (30s lookahead window)
-        
+        """Check if we need to interrupt playback for a chapter-based commercial break.
+
+        Each chapter marker embedded in the video file (except chapter 0) marks the
+        start of a new act — which is exactly the point where commercials are inserted
+        and then the show resumes.  Both the trigger point and the resume point are the
+        same timestamp (the chapter start time).
+
+        Flow for each break:
+          1. episode plays … fades to black … reaches chapter timestamp
+          2. time-pos crosses that timestamp → play commercials
+          3. commercials finish → seek back to the same chapter timestamp and resume
+          4. show fades back in naturally from that point
+
+        Optimisations:
+        - Throttle checks to every 2 seconds (not every 50ms main-loop tick)
+        - Early-exit when more than 30 s from any unhandled break
+
         Returns:
-            Tuple of (break_was_handled, interrupted_event)
+            (break_was_handled, interrupted_event)
             - break_was_handled: True if a break was played (even if interrupted)
-            - interrupted_event: InputEvent if user interrupted, None otherwise
+            - interrupted_event: InputEvent if the user changed channel / quit mid-break
         """
-        nonlocal current_episode_path, episode_metadata, handled_break_indices, in_commercial_break
-        nonlocal last_break_check_time, episode_metadata_cache
-        
+        nonlocal current_episode_path, episode_break_times, handled_break_indices, in_commercial_break
+        nonlocal last_break_check_time
+
         if player is None:
             return (False, None)
-        
+
         # Only check breaks if show_commercials is enabled for the active channel
         active_chan = station.channels.get(station.active_call_sign)
         if active_chan is None:
             return (False, None)
-        
-        # Get channel config to check show_commercials flag
+
         channel_cfg = channels_cfg.by_call_sign().get(station.active_call_sign)
         if channel_cfg is None or not channel_cfg.show_commercials:
             return (False, None)
-        
+
         # Get currently playing file
         current_media = player.current_media_path
         if current_media is None:
             return (False, None)
-        
+
         current_media_norm = _norm_path(current_media)
-        
-        # Check if we switched to a new episode
+
+        # Detect episode switch: query chapter list from mpv and reset break tracking
         if current_episode_path != current_media_norm:
-            # New episode: load metadata from cache or disk and reset break tracking
             current_episode_path = current_media_norm
-            
-            # Check cache first
-            if current_media_norm in episode_metadata_cache:
-                episode_metadata = episode_metadata_cache[current_media_norm]
-            else:
-                # Not in cache: load from disk and cache it
-                episode_metadata = load_episode_metadata(Path(current_media))
-                episode_metadata_cache[current_media_norm] = episode_metadata
-                
-                # Limit cache size to prevent unbounded memory growth
-                if len(episode_metadata_cache) > 100:
-                    # Remove oldest entries (first 20)
-                    keys_to_remove = list(episode_metadata_cache.keys())[:20]
-                    for k in keys_to_remove:
-                        episode_metadata_cache.pop(k, None)
-            
             handled_break_indices = set()
-            last_break_check_time = 0.0  # Force immediate check for new episode
-            
-            # Get time-pos for initial break marking
+            last_break_check_time = 0.0  # Force an immediate check for the new episode
+
+            # Query chapter list directly from mpv (file is already loaded and seekable)
+            episode_break_times = player.get_chapter_list()
+
+            # Get current time-pos to pre-mark any already-past chapters as handled
+            # (prevents retroactive triggers when tuning into the middle of an episode)
             time_pos = player._get_float_property("time-pos")
-            
-            # Mark breaks that are already past as handled (prevent retroactive triggers when tuning mid-episode)
-            if episode_metadata is not None and time_pos is not None:
-                breaks = episode_metadata.get("breaks", [])
-                for i, brk in enumerate(breaks):
-                    # If we're already past the end of this break, mark it as handled
-                    if time_pos >= float(brk["end"]):
+            if time_pos is not None:
+                for i, break_time in enumerate(episode_break_times):
+                    if time_pos >= break_time:
                         handled_break_indices.add(i)
                         if settings.debug:
-                            print(f"[debug] commercials: marking break {i+1} as already-past (time_pos={time_pos:.2f}s >= end={float(brk['end']):.2f}s)")
-            
+                            print(
+                                f"[debug] commercials: marking chapter break {i + 1} as already-past "
+                                f"(time_pos={time_pos:.2f}s >= chapter={break_time:.2f}s)"
+                            )
+
             if settings.debug:
-                if episode_metadata is not None:
-                    num_breaks = len(episode_metadata.get("breaks", []))
-                    num_handled = len(handled_break_indices)
-                    print(f"[debug] commercials: loaded metadata for {Path(current_media).name} ({num_breaks} break(s), {num_handled} already-past)")
-                else:
-                    print(f"[debug] commercials: no metadata for {Path(current_media).name}")
-        
-        # No metadata means no breaks to handle
-        if episode_metadata is None:
+                num_breaks = len(episode_break_times)
+                num_handled = len(handled_break_indices)
+                print(
+                    f"[debug] commercials: {Path(current_media).name} — "
+                    f"{num_breaks} chapter break(s), {num_handled} already-past"
+                )
+
+        # No chapters → no breaks to handle
+        if not episode_break_times:
             return (False, None)
-        
-        breaks = episode_metadata.get("breaks", [])
-        if not breaks:
-            return (False, None)
-        
-        # Throttle: only check breaks every N seconds (not every main loop poll)
+
+        # Throttle: only check every N seconds
         current_time = time.time()
         if current_time - last_break_check_time < break_check_interval:
             return (False, None)
-        
         last_break_check_time = current_time
-        
+
         # Get current playback position
         time_pos = player._get_float_property("time-pos")
         if time_pos is None:
             return (False, None)
-        
-        # Early-exit optimization: check if we're far from ANY unhandled break
-        # Only do detailed checking if we're within 30s of a break start
+
+        # Early-exit: skip if we're more than 30 s from every unhandled break
         lookahead_window = 30.0
-        near_any_break = False
-        for i, brk in enumerate(breaks):
-            if i in handled_break_indices:
-                continue
-            start = float(brk["start"])
-            if time_pos >= (start - lookahead_window):
-                near_any_break = True
-                break
-        
+        near_any_break = any(
+            time_pos >= (episode_break_times[i] - lookahead_window)
+            for i in range(len(episode_break_times))
+            if i not in handled_break_indices
+        )
         if not near_any_break:
-            # Far from any breaks; skip expensive checking
             return (False, None)
-        
-        # We're near a break; check each break window
-        for i, brk in enumerate(breaks):
-            # Skip already-handled breaks
+
+        # Check each chapter break
+        for i, break_time in enumerate(episode_break_times):
             if i in handled_break_indices:
                 continue
-            
-            start = float(brk["start"])
-            end = float(brk["end"])
-            
-            # Check if we've crossed into this break window
-            if time_pos >= start:
-                # Mark this break as handled
+
+            # Trigger when we've reached (or passed) the chapter timestamp
+            if time_pos >= break_time:
                 handled_break_indices.add(i)
-                
+
                 if settings.debug:
-                    print(f"[debug] commercials: triggering break {i+1}/{len(breaks)} at {time_pos:.2f}s (window: {start:.2f}-{end:.2f})")
-                
+                    print(
+                        f"[debug] commercials: triggering chapter break {i + 1}/{len(episode_break_times)} "
+                        f"at chapter={break_time:.2f}s (time_pos={time_pos:.2f}s)"
+                    )
+
                 # Play commercials (may be interrupted by user input)
                 in_commercial_break = True
                 interrupted_event = _play_commercials(count=3)
                 in_commercial_break = False
-                
-                # If interrupted, return the event for the main loop to handle
+
                 if interrupted_event is not None:
                     return (True, interrupted_event)
-                
-                # Resume episode at break end time
+
+                # Resume at the same chapter timestamp (both trigger and resume point)
                 if settings.debug:
-                    print(f"[debug] commercials: resuming episode at {end:.2f}s")
-                
-                player.play(current_media, end)
-                
-                # CRITICAL FIX: Update channel's started_at to reflect the resume position
-                # Without this, the channel's elapsed time calculation will be wrong,
-                # causing premature auto-advance to the next episode.
-                #
-                # Calculate the total time elapsed in the current block up to the resume point.
-                # For multi-file blocks, this includes all files before the current one.
+                    print(f"[debug] commercials: resuming episode at chapter={break_time:.2f}s")
+
+                player.play(current_media, break_time)
+
+                # Update channel's started_at to reflect the resume position so the
+                # scheduler's elapsed-time maths stay correct and don't prematurely
+                # advance to the next episode.
                 resumed_at = now_utc()
                 block = active_chan.get_current_block()
                 pb = active_chan.scheduled_playback(resumed_at)
-                
-                # Total elapsed in block = (files before current) + (offset in current file)
-                time_in_block = sum(block.durations_sec[:pb.file_index]) + end
-                
-                # Update started_at so that: resumed_at - started_at = time_in_block
+
+                # Total elapsed in block = (durations of files before current) + offset in current file
+                time_in_block = sum(block.durations_sec[:pb.file_index]) + break_time
                 active_chan.state.started_at = resumed_at - timedelta(seconds=time_in_block)
-                
-                # Persist the corrected state
                 active_chan._persist_live_state()
-                
+
                 if settings.debug:
-                    print(f"[debug] commercials: updated started_at to {active_chan.state.started_at.isoformat()} (time_in_block={time_in_block:.2f}s)")
-                
-                # Set a guard to prevent immediate re-triggers
+                    print(
+                        f"[debug] commercials: updated started_at to "
+                        f"{active_chan.state.started_at.isoformat()} (time_in_block={time_in_block:.2f}s)"
+                    )
+
+                # Guard to prevent immediate re-triggers after resume
                 player.set_playback_guard(seconds=1.0, reason="COMMERCIAL_BREAK")
-                
+
                 return (True, None)
-        
+
         return (False, None)
 
     try:
@@ -490,15 +462,15 @@ def main() -> int:
             player.play_with_static_burst(info.current_file, info.position_sec, call_sign=info.call_sign)
 
         def _handle_input_event(evt: InputEvent) -> int | None:
-            nonlocal current_episode_path, episode_metadata, handled_break_indices
-            
+            nonlocal current_episode_path, episode_break_times, handled_break_indices
+
             if evt.kind == "quit":
                 print("Exiting.")
                 return 0
             if evt.kind == "channel_up":
                 # Reset commercial state when changing channels
                 current_episode_path = None
-                episode_metadata = None
+                episode_break_times = []
                 handled_break_indices = set()
                 info = station.channel_up(now_utc())
                 if player is not None:
@@ -506,7 +478,7 @@ def main() -> int:
             if evt.kind == "channel_down":
                 # Reset commercial state when changing channels
                 current_episode_path = None
-                episode_metadata = None
+                episode_break_times = []
                 handled_break_indices = set()
                 info = station.channel_down(now_utc())
                 if player is not None:
@@ -514,7 +486,7 @@ def main() -> int:
             if evt.kind == "reset_all":
                 # Reset all channels to fresh state
                 current_episode_path = None
-                episode_metadata = None
+                episode_break_times = []
                 handled_break_indices = set()
                 info = station.reset_all_channels(now_utc())
                 if player is not None:

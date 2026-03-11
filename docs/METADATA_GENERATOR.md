@@ -1,12 +1,29 @@
 # Commercial Break Metadata Generator
 
-A standalone tool to detect commercial break windows in video files and generate metadata JSON files.
+A standalone tool to detect commercial break windows in video files and generate metadata JSON files — intended for use as a **pre-processing step** when embedding chapters into video files that don't already have them.
 
 ## Overview
 
-This tool scans `.mp4` files (or other video formats), detects fade-to-black + silence segments, and outputs JSON metadata files with commercial break timestamps. The metadata files are written next to each video file with the same basename.
+### Primary Method: Embedded Chapters
 
-**Important:** This tool does **not** modify any existing LCARSTV playback logic. It is a standalone helper utility.
+LCARSTV uses **chapters embedded directly in each video file** to determine where commercial breaks occur. Each chapter marker (except chapter 0, which is always the very start of the file) represents the beginning of a new act — which is also the exact timestamp where commercials are inserted and the show resumes.
+
+The sequence at every act break is:
+
+1. Episode plays → fades to black → reaches the chapter timestamp
+2. LCARSTV detects the chapter timestamp has been crossed → plays commercials
+3. Commercials finish → episode resumes at that **same chapter timestamp**
+4. The fade-back-to-show plays naturally from there
+
+No sidecar files are needed. The chapter data travels with the video file itself.
+
+### Secondary Method: This Tool
+
+This tool is for video files that **do not yet have chapters embedded**. It uses ffmpeg to detect fade-to-black segments, writes their timestamps to a sidecar `.json` file, and you can then use those timestamps to embed proper chapters (e.g. via MKVToolNix or `mp4box`) before moving the file into your library.
+
+**The `.json` files produced by this tool are not read by LCARSTV at runtime.** They are an intermediate artefact for your chapter-embedding workflow.
+
+---
 
 ## Prerequisites
 
@@ -133,6 +150,8 @@ For each media file `movie.mp4`, a file `movie.json` is created in the same dire
 - Breaks are sorted in ascending order
 - If no breaks are detected, the `breaks` array will be empty
 
+> **Note:** These JSON files are **not** consumed by LCARSTV at runtime. Use the detected timestamps to embed chapters into your video files (e.g. using MKVToolNix for MKV or `mp4box` for MP4), then add the chaptered files to your media library. LCARSTV will read the embedded chapters directly from the video file.
+
 ## Tuning Parameters
 
 If you're getting too many false positives or missing actual commercial breaks, try adjusting:
@@ -161,20 +180,20 @@ If you're getting too many false positives or missing actual commercial breaks, 
 
 2. **Review the output and adjust parameters if needed**
 
-3. **Generate metadata for real:**
+3. **Generate metadata JSON for real:**
    ```powershell
    python -m lcarstv_tools.generate_metadata --path "Z:\media\test"
    ```
 
-4. **Process entire library recursively:**
-   ```powershell
-   python -m lcarstv_tools.generate_metadata --path "Z:\media" --recursive
-   ```
+4. **Use the detected timestamps to embed chapters** into each video file using your preferred tool (MKVToolNix, mp4box, etc.)
 
-5. **Update existing metadata with new parameters:**
+5. **Verify chapters are present** in the output file:
    ```powershell
-   python -m lcarstv_tools.generate_metadata --path "Z:\media" --recursive --overwrite
+   ffprobe -v quiet -print_format json -show_chapters "your_file.mkv"
    ```
+   Each chapter (index 1, 2, …) should appear at the commercial break timestamps.
+
+6. **Add the chaptered files to your LCARSTV media library.** LCARSTV will automatically detect and use the embedded chapters for commercial break insertion — no JSON files required.
 
 ## When to Use --require-silence
 
@@ -201,7 +220,6 @@ python -m lcarstv_tools.generate_metadata --path "Z:\media" --require-silence
 - **Default mode** (blackdetect-only): One FFmpeg pass per file (~10-15 seconds per hour of video)
 - **With --require-silence**: Two FFmpeg passes per file (~20-30 seconds per hour of video)
 - The tool processes files sequentially
-- Typical speed on modern hardware
 
 ## Troubleshooting
 
@@ -221,9 +239,12 @@ The file may be corrupted or in an unsupported format. Try playing it in a media
 - Decrease black threshold for stricter detection
 - Increase edge exclusion seconds
 
+### My file already has chapters — do I need this tool?
+No. If your video file already has chapters embedded at the act breaks, LCARSTV will use them automatically. This tool is only needed for files that are missing chapters entirely.
+
 ## Notes
 
-- Metadata files (`.json`) are **not** tracked in source control (add to `.gitignore` if needed)
-- Media files are never modified; only metadata JSON files are created
+- Metadata files (`.json`) produced by this tool are **not** read by LCARSTV at runtime
+- Media files are never modified by this tool; only metadata JSON files are created
 - The tool assumes media files are static and will not be moved or renamed
-- Existing LCARSTV playback logic is not affected by this tool
+- LCARSTV reads commercial break positions from **embedded chapters** in the video file itself
