@@ -640,8 +640,8 @@ def main() -> int:
                                     # Skip to next iteration to let the channel change take effect
                                     continue
                             
-                            # Now play the next episode
-                            player.play(info.current_file, info.position_sec, call_sign=info.call_sign)
+                            # Now play the next episode (no call_sign: OSD only shows on channel change)
+                            player.play(info.current_file, info.position_sec)
 
                             # Suppress re-triggers while mpv transitions.
                             suppress_until_time = time.time() + 0.5
