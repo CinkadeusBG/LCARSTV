@@ -1,5 +1,5 @@
 {
-  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV", "WMIX", "WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ"],
+  "channel_order": ["KTOS", "WTNG", "KDSN", "KVOY", "WMOV", "WMIX", "WGGS", "WAGS", "KLIS", "KFTS", "KQLP", "WATM", "WCHS", "WKRD", "WMSH", "WTLZ", "WSAT"],
 
   "channels": [
     {
@@ -145,6 +145,15 @@
       "call_sign": "TWC",
       "label": "The Weather Channel",
       "media_dirs": ["Z:/media/TWC"],
+      "extensions": [".mkv", ".mp4", ".avi"],
+      "show_commercials": false,
+      "cooldown": 1,
+      "sequential_playthrough": false
+    },
+    {
+      "call_sign": "WSAT",
+      "label": "Saturday Morning Cartoons",
+      "media_dirs": ["Z:/media/WSAT"],
       "extensions": [".mkv", ".mp4", ".avi"],
       "show_commercials": false,
       "cooldown": 1,
