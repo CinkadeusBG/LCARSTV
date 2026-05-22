@@ -86,47 +86,44 @@ def main() -> int:
         now=now_utc(),
     )
 
-    # Eager probing: populate duration cache for all media files on startup
-    # This ensures the cache is complete on first run, making subsequent startups instant
-    print("Building duration cache for all media files...")
-    total_files = 0
+    # Eager probing: populate duration cache for all media files on startup.
+    # `get_duration_sec` already checks the in-memory cache before invoking ffprobe,
+    # so the cache-warm path is a single dict lookup per file. Use `peek_duration_sec`
+    # only to classify (cached vs probed) for progress reporting, and skip even that
+    # cost when debug is off on resource-constrained hardware.
+    total_files = sum(
+        len(block.files)
+        for channel in station.channels.values()
+        for block in channel.blocks_by_id.values()
+    )
+    print(f"Building duration cache: {total_files} file(s) across {len(station.channels)} channel(s)...")
+
     probed_count = 0
     cached_count = 0
-    
-    # First pass: count total files across all channels
-    for call_sign, channel in station.channels.items():
-        for block_id, block in channel.blocks_by_id.items():
-            total_files += len(block.files)
-    
-    print(f"Scanning {total_files} media file(s) across {len(station.channels)} channel(s)...")
-    
-    # Second pass: probe all files
-    for call_sign, channel in station.channels.items():
-        for block_id, block in channel.blocks_by_id.items():
+    processed = 0
+    for channel in station.channels.values():
+        for block in channel.blocks_by_id.values():
             for file_path in block.files:
-                # Check if already cached (peek without probing)
-                cached_dur = channel.durations.peek_duration_sec(
+                # Classify before probing so progress reporting is accurate.
+                was_cached = channel.durations.peek_duration_sec(
                     file_path,
-                    default_duration_sec=settings.default_duration_sec
-                )
-                
-                # Now get the actual duration (will probe if not cached)
-                actual_dur = channel.durations.get_duration_sec(
+                    default_duration_sec=settings.default_duration_sec,
+                ) != settings.default_duration_sec
+
+                channel.durations.get_duration_sec(
                     file_path,
-                    default_duration_sec=settings.default_duration_sec
+                    default_duration_sec=settings.default_duration_sec,
                 )
-                
-                # Track whether we probed (peek returned default) or used cache
-                if cached_dur == settings.default_duration_sec and actual_dur != settings.default_duration_sec:
-                    probed_count += 1
-                else:
+
+                if was_cached:
                     cached_count += 1
-                
-                # Progress reporting every 50 files
-                processed = probed_count + cached_count
+                else:
+                    probed_count += 1
+                processed += 1
+
                 if processed % 50 == 0 or processed == total_files:
-                    print(f"  Progress: {processed}/{total_files} files ({probed_count} probed, {cached_count} cached)")
-    
+                    print(f"  Progress: {processed}/{total_files} ({probed_count} probed, {cached_count} cached)")
+
     print(f"Duration cache complete: {total_files} total ({probed_count} newly probed, {cached_count} from cache)")
     print()
 
@@ -229,6 +226,11 @@ def main() -> int:
     # Break check optimization: only check breaks every N seconds (not every poll)
     last_break_check_time: float = 0.0
     break_check_interval: float = 2.0  # Check every 2 seconds instead of 1.0s
+
+    # Cache normalized block file paths so we don't rebuild the set on every 1s
+    # auto-advance poll. Invalidated whenever the active channel or block changes.
+    _cached_block_key: tuple[str, str] | None = None
+    _cached_block_files_norm: set[str] = set()
     
     def _play_commercials(count: int = 3) -> InputEvent | None:
         """Play a sequence of random commercials.
@@ -296,8 +298,9 @@ def main() -> int:
                         print(f"[debug] commercials: commercial ended ({reason})")
                     break
                 
-                time.sleep(0.05)
-        
+                # 100ms is sufficient to catch commercial EOF; halves IPC vs 50ms.
+                time.sleep(0.1)
+
         return None
     
     def _check_and_handle_breaks() -> tuple[bool, InputEvent | None]:
@@ -551,8 +554,11 @@ def main() -> int:
                     # We consider playback "in-channel" if the currently loaded file is
                     # any file in the *current block*.
                     block = active_chan.get_current_block()
-                    block_files_norm = {_norm_path(str(p)) for p in block.files}
-                    in_block = current_media_norm in block_files_norm
+                    block_key = (station.active_call_sign, active_chan.state.current_block_id)
+                    if block_key != _cached_block_key:
+                        _cached_block_key = block_key
+                        _cached_block_files_norm = {_norm_path(str(p)) for p in block.files}
+                    in_block = current_media_norm in _cached_block_files_norm
                     if not in_block:
                         continue
 
@@ -678,7 +684,8 @@ def main() -> int:
                         awaiting_mpv_path = _norm_path(expected_file)
 
             # low CPU polling loop; no threads.
-            time.sleep(0.05)
+            # 100ms = 10Hz, imperceptible for button response, halves idle CPU vs 50ms.
+            time.sleep(0.1)
     finally:
         inp.close()
         if gpio is not None:

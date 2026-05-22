@@ -41,15 +41,31 @@ def _parse_episode_info(item_id: str) -> tuple[int, int] | None:
     return None
 
 
+# Cache of sorted item lists keyed by the input tuple. The eligible items for a
+# channel are immutable for the life of a session, so we can avoid re-running the
+# SxxExx regex + sort on every episode advance. Bounded to avoid unbounded growth
+# in pathological cases (e.g., test code creating many distinct tuples).
+_SORTED_ITEMS_CACHE: dict[tuple[str, ...], list[str]] = {}
+_SORTED_ITEMS_CACHE_MAX = 64
+
+
 def _sort_items_sequentially(items: tuple[str, ...]) -> list[str]:
     """Sort items by season/episode number, falling back to alphabetical for items without SxxExx.
-    
+
     Items with episode info are sorted first by season then episode.
     Items without episode info are sorted alphabetically and placed at the end.
+
+    Result is cached keyed by the input tuple to amortize the regex + sort cost
+    across repeated calls during playback (sequential channels call this on every
+    episode advance).
     """
+    cached = _SORTED_ITEMS_CACHE.get(items)
+    if cached is not None:
+        return cached
+
     items_with_ep: list[tuple[str, int, int]] = []
     items_without_ep: list[str] = []
-    
+
     for item in items:
         ep_info = _parse_episode_info(item)
         if ep_info:
@@ -57,17 +73,22 @@ def _sort_items_sequentially(items: tuple[str, ...]) -> list[str]:
             items_with_ep.append((item, season, episode))
         else:
             items_without_ep.append(item)
-    
+
     # Sort items with episode info by (season, episode)
     items_with_ep.sort(key=lambda x: (x[1], x[2]))
-    
+
     # Sort items without episode info alphabetically
     items_without_ep.sort(key=lambda x: str(x).lower())
-    
+
     # Combine: episodic content first, then non-episodic
     result = [item for item, _, _ in items_with_ep]
     result.extend(items_without_ep)
-    
+
+    if len(_SORTED_ITEMS_CACHE) >= _SORTED_ITEMS_CACHE_MAX:
+        # Evict an arbitrary entry; we don't need LRU precision here.
+        _SORTED_ITEMS_CACHE.pop(next(iter(_SORTED_ITEMS_CACHE)))
+    _SORTED_ITEMS_CACHE[items] = result
+
     return result
 
 

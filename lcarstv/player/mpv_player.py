@@ -98,7 +98,7 @@ class MpvPlayer:
     
     # Property cache to reduce IPC polling overhead
     _property_cache: dict[str, tuple[float, Any]] = field(default_factory=dict, init=False, repr=False)
-    _property_cache_ttl: float = 0.1  # Cache properties for 100ms
+    _property_cache_ttl: float = 0.5  # Cache properties for 500ms (fits within 1s auto-poll)
 
     def set_playback_guard(self, *, seconds: float, reason: str) -> None:
         seconds = max(0.0, float(seconds))
@@ -716,6 +716,20 @@ class MpvPlayer:
             "--sub-auto=no",
             "--keep-open=yes",
         ]
+
+        # Raspberry Pi (and other Linux) tuning:
+        # - Hardware-accelerated decode via VideoCore (mmal) or V4L2 m2m.
+        #   Without this, the Pi 3b's ARM cores decode H.264 in software and
+        #   stutter on 1080p content. `auto` falls back gracefully on desktop.
+        # - Constrain demuxer cache so we don't eat 150MB+ of the Pi's 1GB RAM.
+        if os.name != "nt":
+            args.extend([
+                "--hwdec=auto",
+                "--demuxer-max-bytes=30MiB",
+                "--demuxer-max-back-bytes=15MiB",
+                "--cache=yes",
+                "--cache-secs=8",
+            ])
 
         if self.debug:
             # Print the full command line used to launch mpv.

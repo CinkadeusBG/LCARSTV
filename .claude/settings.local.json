@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Recurse -File)",
+      "Bash(Select-Object FullName, Length)",
+      "Bash(ConvertTo-Csv -NoTypeInformation)",
+      "Bash(Select-Object -First 100)",
+      "Bash(xargs ls -lh)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(python -c \"import lcarstv.app, lcarstv.player.mpv_player, lcarstv.core.selector; print\\('imports ok'\\)\")",
+      "Bash(python -m pytest tests/ -x -q)",
+      "Bash(python -m unittest discover tests -v)"
+    ]
+  }
+}
