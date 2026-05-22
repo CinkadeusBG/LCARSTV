@@ -9,7 +9,9 @@
       "Bash(awk '{print $5, $9}')",
       "Bash(python -c \"import lcarstv.app, lcarstv.player.mpv_player, lcarstv.core.selector; print\\('imports ok'\\)\")",
       "Bash(python -m pytest tests/ -x -q)",
-      "Bash(python -m unittest discover tests -v)"
+      "Bash(python -m unittest discover tests -v)",
+      "Bash(python -c \"import lcarstv.player.mpv_player; print\\('ok'\\)\")",
+      "Bash(python -m unittest discover tests -q)"
     ]
   }
 }

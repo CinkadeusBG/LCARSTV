@@ -885,13 +885,25 @@ class MpvPlayer:
                     print(f"[debug] static burst start: {self.static_burst_path}")
 
                 # Suppress end triggers during static and immediately after the real tune.
-                self.set_playback_guard(seconds=float(self.static_burst_duration_sec) + 0.75, reason="TUNE")
+                # Budget: up to 1.5s ready-wait + burst duration + 0.75s post-tune grace.
+                self.set_playback_guard(
+                    seconds=1.5 + float(self.static_burst_duration_sec) + 0.75,
+                    reason="TUNE",
+                )
 
                 # Use loadfile directly here, then wait.
                 if self._proc is None or self._ipc is None:
                     self.start()
                 cmd = self._ipc.trace_command if self.ipc_trace else self._ipc.command
                 cmd("loadfile", str(static_path), "replace", timeout_sec=10.0)
+
+                # Wait for mpv to actually be ready to display the static file before
+                # we start counting burst duration. On the Pi, cache fill + hwdec init
+                # can add 200-500ms of latency after `loadfile` before the first frame
+                # appears. Without this wait, the burst-duration sleep elapses entirely
+                # during cache fill and the static is never visible on screen.
+                self._wait_for_media_ready(timeout_sec=1.5, poll_interval_sec=0.02)
+
                 time.sleep(max(0.0, float(self.static_burst_duration_sec)))
 
                 if self.debug:
